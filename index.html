@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FC</title>
+  <title>SL</title>
   <link rel="shortcut icon" href="https://fancode.cricsters.io/fancode.webp" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -40,44 +40,42 @@
   </style>
 </head>
 <body class="bg-gray-950 min-h-screen">
-
   <div class="max-w-7xl mx-auto px-4 py-8 sm:py-10">
-    <h1 class="text-3xl sm:text-4xl font-bold text-center text-white mb-8 tracking-wide">Fancode Matches</h1>
+    <h1 class="text-3xl sm:text-4xl font-bold text-center text-white mb-8 tracking-wide">SonyLIV Matches</h1>
     <div id="matches-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
-    <!-- Matches load here -->
+      <!-- Matches load here -->
     </div>
   </div>
+
   <script>
     const container = document.getElementById('matches-container');
+
     fetch('https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json')
       .then(response => response.json())
       .then(data => {
         const matches = data.matches;
+
         matches.forEach(match => {
           const isLive = match.status === 'LIVE';
-          const hasDai = !!match.dai_url;
-          const hasAdFree = !!match.adfree_url;
+          const hasPub = !!match.pub_url;
+
           const card = document.createElement('div');
           card.className = `rounded-2xl overflow-hidden shadow-xl match-card border border-gray-800 ${isLive ? 'ring-2 ring-red-600' : ''}`;
+
           let buttonHTML = '';
-          if (hasDai && hasAdFree) {
+          if (hasPub) {
             buttonHTML = `
-              <a href="/play?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="${match.pub_url}" target="_blank" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-play mr-2"></i> Watch
               </a>
-              <a href="/play?url=${match.adfree_url}" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
-                <i class="fas fa-ad mr-2"></i> Ad-Free
-              </a>
-            `;
-          } else if (hasDai) {
-            buttonHTML = `
-              <a href="/play?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
-                <i class="fas fa-play mr-2"></i> Watch
-              </a>
+              <button onclick="copyToClipboard('${match.pub_url}')" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+                <i class="fas fa-copy mr-2"></i> Copy URL
+              </button>
             `;
           } else {
             buttonHTML = `<span class="text-gray-500 italic">Upcoming Match</span>`;
           }
+
           card.innerHTML = `
             <div class="relative">
               <img src="${match.src}" alt="${match.title}" class="w-full h-48 sm:h-60 md:h-64 lg:h-72 object-cover object-top match-img">
@@ -99,6 +97,14 @@
         console.error('Error fetching JSON:', error);
         container.innerHTML = `<p class="text-center text-red-500">Failed to load matches.</p>`;
       });
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('URL copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy URL: ', err);
+      });
+    }
   </script>
 </body>
-</html> 
+</html>

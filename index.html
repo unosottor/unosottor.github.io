@@ -1,119 +1,51 @@
-<!DOCTYPE html>
-<html lang="bn">
+ <!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>SonyLiv Events</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #111827;
-      color: #fff;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1rem;
-      padding: 1rem;
-    }
-    /* Card Fix & Boxy Design */
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      transition: transform 0.2s ease;
-    }
-    .card img {
-      width: 100%;
-      height: 180px;          /* Fixed height */
-      object-fit: cover;      /* Crop nicely */
-      border-bottom: 1px solid #eee;
-    }
-    .card-content {
-      padding: 0.75rem 1rem;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .card h2 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin: 0.25rem 0;
-      color: #111;
-    }
-    .card p {
-      font-size: 0.85rem;
-      color: #555;
-      margin: 0.25rem 0;
-    }
-    .watch-btn {
-      display: inline-block;
-      background: #2563eb;
-      color: #fff;
-      text-align: center;
-      padding: 0.5rem;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      margin-top: 0.5rem;
-      transition: background 0.2s ease;
-    }
-    .watch-btn:hover {
-      background: #1d4ed8;
-    }
-    .card:hover {
-      transform: translateY(-5px);
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SonyLiv JSON Cards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <header>🎬 SonyLiv Live Events</header>
-  <div class="grid" id="cards"></div>
+<body class="bg-gray-100">
+  <h1 class="text-3xl font-bold text-center my-6 text-gray-800">SonyLiv Live Events</h1>
+  
+  <div id="cards" class="grid gap-6 px-4 md:grid-cols-3 lg:grid-cols-4"></div>
 
   <script>
     async function loadData() {
       try {
         const res = await fetch("https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json");
         const data = await res.json();
+
         const container = document.getElementById("cards");
         container.innerHTML = "";
 
-        data.forEach(item => {
-          const card = document.createElement("div");
-          card.className = "card";
+        if (data && data.length > 0) {
+          data.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1 transition";
 
-          card.innerHTML = `
-            <img src="${item.image}" alt="${item.title}">
-            <div class="card-content">
-              <div>
-                <h2>${item.title}</h2>
-                <p>${item.category || ""}</p>
-                <p>${item.match || ""}</p>
+            card.innerHTML = `
+              <img src="${item.logo}" alt="${item.title}" class="w-full h-48 object-cover border-b" />
+              <div class="p-4 flex flex-col justify-between h-full">
+                <div>
+                  <h2 class="text-lg font-semibold text-gray-800">${item.title}</h2>
+                  <p class="text-sm text-gray-500">${item.category || ""}</p>
+                </div>
+                <a href="${item.pub_url}" target="_blank" class="mt-4 inline-block bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 text-center">Watch Now</a>
               </div>
-              <a href="${item.pub_url}" target="_blank" class="watch-btn">Watch Now</a>
-            </div>
-          `;
-          container.appendChild(card);
-        });
+            `;
+            container.appendChild(card);
+          });
+        } else {
+          container.innerHTML = "<p class='text-center text-gray-600'>No data found.</p>";
+        }
       } catch (e) {
-        console.error("Error loading JSON:", e);
+        console.error(e);
+        document.getElementById("cards").innerHTML = "<p class='text-center text-red-500'>Failed to load data.</p>";
       }
     }
+
     loadData();
   </script>
 </body>

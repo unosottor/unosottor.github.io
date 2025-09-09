@@ -1,52 +1,145 @@
  <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SonyLiv JSON Cards</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SL Live Events</title>
+  <style>
+    /* আপনার Tailwind মিনিফাই করা CSS */
+    *,:before,:after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}:before,:after{--tw-content:""}html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif}body{margin:0;line-height:inherit;background:#1F0C50;color:#fff}.container{width:100%;margin:0 auto;max-width:1280px}.grid{display:grid}.gap-4{gap:1rem}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.p-4{padding:1rem}.rounded-lg{border-radius:.5rem}.shadow-lg{box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1)}.bg-white{background:#fff}.text-center{text-align:center}.text-lg{font-size:1.125rem;line-height:1.75rem}.font-bold{font-weight:700}.text-gray-600{color:rgb(75 85 99)}.mt-2{margin-top:.5rem}.mb-4{margin-bottom:1rem}.w-full{width:100%}.h-48{height:12rem}.object-cover{object-fit:cover}.rounded{border-radius:.25rem}.bg-blue-700{background:rgb(29 78 216)}.text-white{color:#fff}.px-4{padding-left:1rem;padding-right:1rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.inline-block{display:inline-block}
+    
+    /* Search Input Styling */
+    #searchInput {
+      width: 90%;
+      margin: 20px auto;
+      display: block;
+      padding: 12px 15px;
+      border-radius: 50px;
+      background: #000;
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+      border: none;
+      outline: none;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+    #searchInput::placeholder { color: #aaa; }
+
+    /* Card & Popup Animations */
+    .card { cursor: pointer; transition: transform 0.2s ease; }
+    .card:hover { transform: scale(1.05); }
+
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      animation: fadeOut 0.3s forwards;
+    }
+    .modal.show { display: flex; animation: fadeIn 0.3s forwards; }
+
+    .modal-content {
+      background: #fff;
+      color: #000;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      transform: translateY(50px);
+      opacity: 0;
+      animation: slideOut 0.3s forwards;
+    }
+    .modal.show .modal-content { animation: slideIn 0.3s forwards; }
+
+    .modal button {
+      margin: 10px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .copy-btn { background: #2ecc71; color: #fff; }
+    .watch-btn { background: #e61271; color: #fff; }
+    .close-btn { background: #555; color: #fff; }
+
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    @keyframes fadeOut { from { opacity:1; } to { opacity:0; } }
+    @keyframes slideIn { from { transform: translateY(50px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    @keyframes slideOut { from { transform: translateY(0); opacity:1; } to { transform: translateY(50px); opacity:0; } }
+  </style>
 </head>
-<body class="bg-gray-100">
-  <h1 class="text-3xl font-bold text-center my-6 text-gray-800">SonyLiv Live Events</h1>
-  
-  <div id="cards" class="grid gap-6 px-4 md:grid-cols-3 lg:grid-cols-4"></div>
+<body>
+  <h1 class="text-lg font-bold text-center mt-4">Live & Upcoming Events</h1>
+  <input type="search" id="searchInput" placeholder="Search events...">
+
+  <div class="container p-4">
+    <div id="cards" class="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"></div>
+  </div>
+
+  <!-- Popup Modal -->
+  <div id="popupModal" class="modal">
+    <div class="modal-content">
+      <h3 id="popupTitle">Watch Now</h3>
+      <button class="copy-btn" id="copyBtn">Copy Link</button>
+      <button class="watch-btn" id="watchBtn">Watch Now</button>
+      <button class="close-btn" id="closeBtn">Close</button>
+    </div>
+  </div>
 
   <script>
-    async function loadData() {
-      try {
-        const res = await fetch("https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json");
-        const data = await res.json();
+    const modal = document.getElementById("popupModal");
+    const copyBtn = document.getElementById("copyBtn");
+    const watchBtn = document.getElementById("watchBtn");
+    const closeBtn = document.getElementById("closeBtn");
+    let currentUrl = "";
 
+    const openPopup = (url, title) => {
+      currentUrl = url;
+      document.getElementById("popupTitle").textContent = title;
+      modal.classList.add("show");
+    };
+    copyBtn.addEventListener("click", () => {
+      navigator.clipboard.writeText(currentUrl).then(() => alert("Link copied!"));
+    });
+    watchBtn.addEventListener("click", () => window.open(currentUrl, "_blank"));
+    closeBtn.addEventListener("click", () => modal.classList.remove("show"));
+
+    // Fetch JSON and render cards
+    fetch("https://raw.githubusercontent.com/drmlive/sliv-live-events/main/sonyliv.json")
+      .then(res => res.json())
+      .then(json => {
         const container = document.getElementById("cards");
-        container.innerHTML = "";
+        const matches = json.matches || [];
+        matches.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "bg-white rounded-lg shadow-lg p-4 card";
+          card.innerHTML = `
+            <img src="${item.src}" alt="${item.event_name}" class="w-full h-48 object-cover rounded mb-4" />
+            <h2 class="text-lg font-bold text-center">${item.event_name}</h2>
+            <p class="text-gray-600 text-center mt-2">${item.event_category} ${item.match_name ? "– " + item.match_name : ""}</p>
+          `;
+          card.onclick = () => {
+            if (item.pub_url) openPopup(item.pub_url, item.event_name);
+            else alert("Link not available");
+          };
+          container.appendChild(card);
+        });
+      })
+      .catch(err => console.error("Failed to load JSON:", err));
 
-        if (data && data.length > 0) {
-          data.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "bg-white rounded-xl shadow-lg overflow-hidden hover:-translate-y-1 transition";
-
-            card.innerHTML = `
-              <img src="${item.logo}" alt="${item.title}" class="w-full h-48 object-cover border-b" />
-              <div class="p-4 flex flex-col justify-between h-full">
-                <div>
-                  <h2 class="text-lg font-semibold text-gray-800">${item.title}</h2>
-                  <p class="text-sm text-gray-500">${item.category || ""}</p>
-                </div>
-                <a href="${item.pub_url}" target="_blank" class="mt-4 inline-block bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-blue-700 text-center">Watch Now</a>
-              </div>
-            `;
-            container.appendChild(card);
-          });
-        } else {
-          container.innerHTML = "<p class='text-center text-gray-600'>No data found.</p>";
-        }
-      } catch (e) {
-        console.error(e);
-        document.getElementById("cards").innerHTML = "<p class='text-center text-red-500'>Failed to load data.</p>";
-      }
-    }
-
-    loadData();
+    // Search filter
+    document.getElementById("searchInput").addEventListener("input", function() {
+      const val = this.value.toLowerCase();
+      document.querySelectorAll("#cards .card").forEach(card => {
+        card.style.display = card.innerText.toLowerCase().includes(val) ? "block" : "none";
+      });
+    });
   </script>
 </body>
 </html>

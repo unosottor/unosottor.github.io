@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title></title>
   <style>
-    :root{--accent:#0b76ef;--bg:#0f1720;--card:#0b1220}
+    :root{--accent:#0b76ef}
     body{margin:0;font-family:Arial, sans-serif;background:#f5f7fb;color:#0b1220}
     .topbar{
       display:flex;
@@ -27,39 +27,20 @@
       border:1px solid transparent;
     }
     .tab.active{ background:var(--accent); color:#fff; box-shadow:0 4px 12px rgba(11,118,239,0.18); border-color:rgba(0,0,0,0.05) }
-    .container{
-      padding:16px;
-      max-width:1200px;
-      margin:18px auto;
-    }
+    .container{margin:0}
 
     /* content areas */
-    .content { display:none; }
+    .content { display:none; height:calc(100vh - 60px); } /* 60px ~ topbar height */
     .content.show { display:block; }
 
-    /* iframe styles (when using URL method) */
+    /* iframe full page */
     .frame {
       width:100%;
-      height:70vh;
+      height:100%;
       border:0;
-      border-radius:8px;
-      box-shadow:0 8px 30px rgba(2,6,23,0.06);
-      background:#fff;
     }
 
-    /* keep smaller related items below */
-    .shared-footer {
-      margin-top:12px;
-      padding:10px;
-      border-radius:8px;
-      background:#fff;
-      box-shadow:0 2px 8px rgba(2,6,23,0.04);
-      font-size:14px;
-    }
-
-    /* mobile tweaks */
     @media (max-width:640px){
-      .frame{height:56vh}
       .tab{padding:8px 10px;font-size:14px}
     }
   </style>
@@ -75,41 +56,26 @@
   </div>
 
   <div class="container">
-    <!-- ===== Option A: If you have URLs (use iframe) =====
-         Replace the src values with your two page URLs. -->
-    <div id="web1" class="content show" data-type="iframe">
+    <div id="web1" class="content show">
       <iframe class="frame" src="https://dishlive24.github.io/aaa/one" title="WEB 1"></iframe>
     </div>
-
-    <div id="web2" class="content" data-type="iframe">
+    <div id="web2" class="content">
       <iframe class="frame" src="https://dishlive24.github.io/aaa/two" title="WEB 2"></iframe>
-    </div>
-    <div class="shared-footer">
-      <strong></strong>
     </div>
   </div>
 
   <script>
-    // Tab switching logic
     const tabs = document.querySelectorAll('.tab');
     const contents = document.querySelectorAll('.content');
 
     function activateTab(targetId, clickedTab){
       contents.forEach(c=>{
-        if(c.id === targetId){
-          c.classList.add('show');
-        } else {
-          c.classList.remove('show');
-        }
+        c.classList.toggle('show', c.id === targetId);
       });
       tabs.forEach(t=>{
-        if(t === clickedTab){
-          t.classList.add('active');
-          t.setAttribute('aria-selected','true');
-        } else {
-          t.classList.remove('active');
-          t.setAttribute('aria-selected','false');
-        }
+        const active = (t === clickedTab);
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
       });
     }
 
@@ -117,17 +83,15 @@
       tab.addEventListener('click', ()=>{
         const target = tab.dataset.target;
         activateTab(target, tab);
+        sessionStorage.setItem('lastTab', target);
       });
     });
 
-    // Optional: preserve last active tab in sessionStorage so reload keeps it
     const last = sessionStorage.getItem('lastTab');
     if(last){
       const el = Array.from(tabs).find(t => t.dataset.target === last);
       if(el) activateTab(last, el);
     }
-    tabs.forEach(t => t.addEventListener('click', () => sessionStorage.setItem('lastTab', t.dataset.target)));
-
   </script>
 
 </body>

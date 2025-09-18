@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DISH LIVE 24 | FANCODE</title>
+  <title></title>
   <link rel="shortcut icon" href="https://fancode.cricsters.io/fancode.webp" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -62,16 +62,16 @@
           let buttonHTML = '';
           if (hasDai && hasAdFree) {
             buttonHTML = `
-              <a href="/aaa?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-play mr-2"></i> Watch
               </a>
-              <a href="/aaa?url=${match.adfree_url}" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.adfree_url}" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-ad mr-2"></i> Ad-Free
               </a>
             `;
           } else if (hasDai) {
             buttonHTML = `
-              <a href="/aaa?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-play mr-2"></i> Watch
               </a>
             `;

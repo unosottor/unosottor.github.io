@@ -1,134 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>PLAYER</title>
-  <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+  <title></title></title>
+  <link rel="stylesheet" type="text/css" href="/nnn/clprr.css">
+
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      background: #000;
-      overflow: hidden;
+    html,body{margin:0;padding:0;background:#000;height:100%;width:100%;overflow:hidden}
+    #player-wrapper{position:fixed;inset:0;width:100%;height:100%;background:#000}
+    #player{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;font-size:16px;text-align:center}
+    #player video{object-fit:contain !important;width:100% !important;height:100% !important;background-color:#000}
+    .error-message{color:#ff4d4d;font-size:18px;font-weight:bold;background:rgba(0,0,0,0.6);padding:12px 20px;border-radius:6px}
+
+    body {margin:0;}
+    [data-player]{width:100%!important;height:100%!important;}
+    [data-html5-video]{object-fit:fill;}
+
+    /* Spinner */
+    .spinner-three-bounce[data-spinner]{width:150px!important;}
+    .spinner-three-bounce[data-spinner]>div{
+      width:50px!important;height:50px!important;background-color:#eb2165!important;
     }
-    #player-wrapper {
-      position: relative;
-      background: #000;
-      width: 100%;
-      height: 100%;
+
+    /* Seekbar */
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar]{height:3px!important;}
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover .bar-background[data-seekbar]{height:5px!important;}
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]{top:-21px!important;}
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover{top:-22px!important;}
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-scrubber[data-seekbar] .bar-scrubber-icon[data-seekbar]{
+      top:11px!important;width:0!important;height:0!important;box-shadow:none!important;transition:.3s!important;
     }
-    video { background-color: #000 !important; }
-    #loadingSpinner {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      display: flex;
-      gap: 8px;
-      z-index: 9999;
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover .bar-scrubber[data-seekbar] .bar-scrubber-icon[data-seekbar]{
+      top:5px!important;width:15px!important;height:15px!important;box-shadow:0 0 0 6px hsla(0,0%,100%,.2)!important;
     }
-    #loadingSpinner div {
-      width: 12px;
-      height: 12px;
-      background-color: #880808;
-      border-radius: 50%;
-      animation: bounce 0.6s infinite alternate;
-    }
-    #loadingSpinner div:nth-child(2) { animation-delay: 0.2s; }
-    #loadingSpinner div:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { to { transform: translateY(-16px); } }
+
+    /* Seek time */
+    .seek-time[data-seek-time]{background:#fff!important;}
+    .seek-time[data-seek-time] [data-duration]{color:#777!important;font-size:12px!important;}
+    .seek-time[data-seek-time] [data-seek-time]{color:#000!important;font-size:11px!important;}
+
+    /* Transparent fill */
+    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar] .bar-fill-1[data-seekbar]{background:transparent!important;}
+
+    /* Volume */
+    .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume] svg{height:32px!important;top:-1px!important;}
+    .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume]{width:32px!important;height:40px!important;}
+
+    /* Icons */
+    .media-control[data-media-control] .media-control-icon{opacity:.8!important;}
+    .media-control[data-media-control] .media-control-icon:hover{opacity:1!important;}
+
+    /* Watermark */
+    [data-watermark]{top:4px!important;left:2px!important;float:left!important;opacity:.66!important;width:100px!important;transition:.3s;overflow:hidden;}
   </style>
 </head>
 <body>
+  <div id="player-wrapper">
+    <div id="player"></div>
+  </div>
 
-<div id="player-wrapper"></div>
+  <!-- Clappr Core -->
+  <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <!-- Plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/level-selector@0.2.0/dist/level-selector.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@c3voc/clappr-audio-track-selector@0.2.4/dist/audio-track-selector.min.js"></script>
 
-<!-- Loading Spinner -->
-<div id="loadingSpinner"><div></div><div></div><div></div></div>
+  <script>
+    // ✅ Get URL from ?url=
+    const urlParams = new URLSearchParams(window.location.search);
+    const streamUrl = urlParams.get("url") || "";
 
-<script>
-  const urlParams = new URLSearchParams(window.location.search);
-  const id = urlParams.get("id");
-  const directUrl = urlParams.get("url");
-  const jsonURL = "";
-  
-  function captureThumbnail(videoUrl) {
-    return new Promise((resolve) => {
-      const video = document.createElement("video");
-      video.src = videoUrl;
-      video.crossOrigin = "anonymous";
-      video.muted = true;
-      video.playsInline = true;
-
-      video.addEventListener("loadeddata", () => {
-        video.currentTime = 0.1; 
-      });
-
-      video.addEventListener("seeked", () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imgData = canvas.toDataURL("image/png");
-        resolve(imgData);
-      });
-    });
-  }
-
-  async function initPlayer(source) {
-    // remove loader
-    const spinner = document.getElementById("loadingSpinner");
-    if (spinner) spinner.remove();
-
-    const posterImg = await captureThumbnail(source);
-
-    new Clappr.Player({
-      source: source,
-      parentId: "#player-wrapper",
-      autoPlay: true,
-      muted: true,
-      width: "100%",
-      height: "100%",
-      mimeType: "application/x-mpegURL",
-      fullscreenEnabled: true,
-      poster: posterImg,   
-      hideMediaControl: false
-    });
-
-    document.addEventListener("fullscreenchange", () => {
-      if (document.fullscreenElement && screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock("landscape").catch(() => {});
-      }
-    });
-  }
-
-  if (directUrl) {
-    initPlayer(directUrl);
-  } else if (id) {
-    fetch(jsonURL)
-      .then(res => res.json())
-      .then(data => {
-        if (data[id] && data[id].file) {
-          initPlayer(data[id].file);
-        } else {
-          document.getElementById("player-wrapper").innerHTML =
-            "<p style='color:#880808;text-align:center;padding-top:20px;'><b>Invalid channel ID</b></p>";
+    if(!streamUrl){
+      document.getElementById('player').innerHTML =
+        "<p class='error-message'>❌ No stream URL provided (use ?url=...)</p>";
+    } else {
+      var player = new Clappr.Player({
+        parentId: "#player",
+        source: streamUrl,
+        width: "100%",
+        height: "100%",
+        autoPlay: true,
+        mute: false,
+        loop: false,
+        plugins: [LevelSelector, AudioTrackSelector],
+        levelSelectorConfig: { title: "Quality" },
+        audioTrackSelectorConfig: {
+          title: "Audio",
+          labelCallback: function(track){ return track.lang || track.name || "Unknown"; }
+        },
+        mediacontrol: { seekbar: "#e92065", buttons: "#e92065" },
+        playback: {
+          playInline: true,
+          crossOrigin: "anonymous",
+          hlsjsConfig: { capLevelToPlayerSize: true, maxBufferLength: 30 }
         }
-      })
-      .catch(err => {
-        console.error("JSON Load Error:", err);
-        document.getElementById("player-wrapper").innerHTML =
-          "<p style='color:#880808;text-align:center;padding-top:20px;'>Failed to load channel list.</p>";
       });
-  } else {
-    document.getElementById("player-wrapper").innerHTML =
-      "<p style='color:#880808;text-align:center;padding-top:20px;'><b>No URL or ID provided</b></p>";
-  }
-</script>
 
+      // Error handler
+      player.on(Clappr.Events.PLAYER_ERROR, function(e){
+        document.getElementById('player').innerHTML =
+          "<p class='error-message'>⚠️ Stream unavailable or down !</p>";
+      });
+    }
+  </script>
 </body>
 </html>

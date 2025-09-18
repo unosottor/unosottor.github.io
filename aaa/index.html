@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="bn">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title></title>
+  <style>
+    :root{--accent:#0b76ef;--bg:#0f1720;--card:#0b1220}
+    body{margin:0;font-family:Arial, sans-serif;background:#f5f7fb;color:#0b1220}
+    .topbar{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:10px 16px;
+      background:linear-gradient(90deg,#ffffff,#f0f4ff);
+      box-shadow:0 2px 6px rgba(2,6,23,0.05);
+      position:sticky; top:0; z-index:40;
+    }
+    .tabs{display:flex; gap:8px; margin-left:8px;}
+    .tab {
+      padding:8px 14px;
+      border-radius:10px;
+      cursor:pointer;
+      user-select:none;
+      font-weight:600;
+      background:transparent;
+      border:1px solid transparent;
+    }
+    .tab.active{ background:var(--accent); color:#fff; box-shadow:0 4px 12px rgba(11,118,239,0.18); border-color:rgba(0,0,0,0.05) }
+    .container{
+      padding:16px;
+      max-width:1200px;
+      margin:18px auto;
+    }
+
+    /* content areas */
+    .content { display:none; }
+    .content.show { display:block; }
+
+    /* iframe styles (when using URL method) */
+    .frame {
+      width:100%;
+      height:70vh;
+      border:0;
+      border-radius:8px;
+      box-shadow:0 8px 30px rgba(2,6,23,0.06);
+      background:#fff;
+    }
+
+    /* keep smaller related items below */
+    .shared-footer {
+      margin-top:12px;
+      padding:10px;
+      border-radius:8px;
+      background:#fff;
+      box-shadow:0 2px 8px rgba(2,6,23,0.04);
+      font-size:14px;
+    }
+
+    /* mobile tweaks */
+    @media (max-width:640px){
+      .frame{height:56vh}
+      .tab{padding:8px 10px;font-size:14px}
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <div style="font-weight:800;font-size:18px">MY SITE</div>
+    <div class="tabs" role="tablist" aria-label="Web tabs">
+      <button class="tab active" data-target="web1" role="tab" aria-selected="true">WEB 1</button>
+      <button class="tab" data-target="web2" role="tab" aria-selected="false">WEB 2</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- ===== Option A: If you have URLs (use iframe) =====
+         Replace the src values with your two page URLs. -->
+    <div id="web1" class="content show" data-type="iframe">
+      <iframe class="frame" src="/aaa/web1.html" title="WEB 1"></iframe>
+    </div>
+
+    <div id="web2" class="content" data-type="iframe">
+      <iframe class="frame" src="/aaa/web2.html" title="WEB 2"></iframe>
+    </div>
+
+    <!-- ===== Option B: If you have raw HTML snippets =====
+         Instead of the iframe blocks above, you can paste your HTML directly:
+         1) Remove or comment out Option A iframe blocks.
+         2) Uncomment and paste your HTML inside the divs below.
+         Example:
+         <div id="web1" class="content show" data-type="inline">
+           <!-- Paste WEB1 HTML here -->
+         </div>
+    -->
+    <!--
+    <div id="web1" class="content show" data-type="inline">
+      <!-- Paste WEB1 HTML here -->
+    </div>
+
+    <div id="web2" class="content" data-type="inline">
+      <!-- Paste WEB2 HTML here -->
+    </div>
+    -->
+
+    <div class="shared-footer">
+      <strong>Common area / shared elements:</strong>
+    </div>
+  </div>
+
+  <script>
+    // Tab switching logic
+    const tabs = document.querySelectorAll('.tab');
+    const contents = document.querySelectorAll('.content');
+
+    function activateTab(targetId, clickedTab){
+      contents.forEach(c=>{
+        if(c.id === targetId){
+          c.classList.add('show');
+        } else {
+          c.classList.remove('show');
+        }
+      });
+      tabs.forEach(t=>{
+        if(t === clickedTab){
+          t.classList.add('active');
+          t.setAttribute('aria-selected','true');
+        } else {
+          t.classList.remove('active');
+          t.setAttribute('aria-selected','false');
+        }
+      });
+    }
+
+    tabs.forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        const target = tab.dataset.target;
+        activateTab(target, tab);
+      });
+    });
+
+    // Optional: preserve last active tab in sessionStorage so reload keeps it
+    const last = sessionStorage.getItem('lastTab');
+    if(last){
+      const el = Array.from(tabs).find(t => t.dataset.target === last);
+      if(el) activateTab(last, el);
+    }
+    tabs.forEach(t => t.addEventListener('click', () => sessionStorage.setItem('lastTab', t.dataset.target)));
+
+  </script>
+
+</body>
+</html>

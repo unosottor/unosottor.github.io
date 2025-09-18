@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>PLAYER</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@clappr/hlsjs-playback@1.2.0/dist/hlsjs-playback.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/cdnbye@latest/dist/clappr-plugin.min.js"></script>
+  <link href="https://www.hls-player.net/fav.png" rel="icon" type="image/x-icon"/>
+  <style>
+    body {margin:0;padding:0;}
+    .video-con {position:relative;width:100%;}
+  </style>
+</head>
+<body>
+<div class="video-con">
+  <meta content="no-referrer" name="referrer" />
+  <div id="vid"></div>
+  <script>
+    function getQueryParam(param) {
+      const queryParams = new URLSearchParams(window.location.search);
+      return queryParams.get(param);
+    }
+
+    const videoSource = getQueryParam('url');
+
+    const player = new Clappr.Player({
+      source: videoSource,
+      parentId: '#vid',
+      width: '100%',
+      height: '100%',
+      autoPlay: true,
+      mute: false,              
+      watermark: '', 
+      position: 'top-right',
+      plugins: [HlsjsPlayback, CDNByeClapprPlugin], // Quality selector বাদ দিলাম
+      playback: {
+        hlsjsConfig: {
+          liveSyncDuration: 3,  
+          liveMaxLatencyDuration: 5,
+          p2pConfig: { live: true }
+        }
+      }
+    });
+
+
+    player.on(Clappr.Events.PLAYER_PLAY, function() {
+      if (player.core.activePlayback && player.core.activePlayback._hls) {
+        const hls = player.core.activePlayback._hls;
+        hls.currentLevel = -1;  
+      }
+    });
+  </script>
+</div>
+</body>
+</html>

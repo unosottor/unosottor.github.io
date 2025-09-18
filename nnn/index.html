@@ -6,16 +6,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
   <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@clappr/hlsjs-playback@1.2.0/dist/hlsjs-playback.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/cdnbye@latest/dist/clappr-plugin.min.js"></script>
-  <link href="https://www.hls-player.net/fav.png" rel="icon" type="image/x-icon"/>
+  <script src="https://cdn.jsdelivr.net/npm/cdnbye@latest/dist/clappr-plugin.min.js"></script>
   <style>
-    body {margin:0;padding:0;}
-    .video-con {position:relative;width:100%;}
+    body {margin:0;padding:0;background:#000;}
+    #vid {width:100%;height:100vh;}
   </style>
 </head>
 <body>
-<div class="video-con">
-  <meta content="no-referrer" name="referrer" />
   <div id="vid"></div>
   <script>
     function getQueryParam(param) {
@@ -25,33 +22,34 @@
 
     const videoSource = getQueryParam('url');
 
-    const player = new Clappr.Player({
-      source: videoSource,
-      parentId: '#vid',
-      width: '100%',
-      height: '100%',
-      autoPlay: true,
-      mute: false,              
-      watermark: '', 
-      position: 'top-right',
-      plugins: [HlsjsPlayback, CDNByeClapprPlugin], // Quality selector বাদ দিলাম
-      playback: {
-        hlsjsConfig: {
-          liveSyncDuration: 3,  
-          liveMaxLatencyDuration: 5,
-          p2pConfig: { live: true }
+    if (!videoSource) {
+      document.getElementById("vid").innerHTML = "<h2 style='color:white;text-align:center;padding-top:40vh'>❌ No video URL provided</h2>";
+    } else {
+      const player = new Clappr.Player({
+        source: videoSource,
+        parentId: '#vid',
+        width: '100%',
+        height: '100%',
+        autoPlay: true,
+        mute: false,    // সবসময় সাউন্ড অন থাকবে
+        plugins: [HlsjsPlayback, CDNByeClapprPlugin],
+        playback: {
+          hlsjsConfig: {
+            liveSyncDuration: 3,        // সবসময় লাইভ-edge
+            liveMaxLatencyDuration: 5,
+            p2pConfig: { live: true }
+          }
         }
-      }
-    });
+      });
 
-
-    player.on(Clappr.Events.PLAYER_PLAY, function() {
-      if (player.core.activePlayback && player.core.activePlayback._hls) {
-        const hls = player.core.activePlayback._hls;
-        hls.currentLevel = -1;  
-      }
-    });
+      // সবসময় HD (highest quality)
+      player.on(Clappr.Events.PLAYER_PLAY, function() {
+        if (player.core.activePlayback && player.core.activePlayback._hls) {
+          const hls = player.core.activePlayback._hls;
+          hls.currentLevel = -1;  // auto সর্বোচ্চ bitrate
+        }
+      });
+    }
   </script>
-</div>
 </body>
 </html>

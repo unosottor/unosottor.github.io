@@ -1,58 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-  <title></title></title>
-  <link rel="stylesheet" type="text/css" href="/nnn/clprr.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+  <title></title>
 
   <style>
+    /* Page + player */
     html,body{margin:0;padding:0;background:#000;height:100%;width:100%;overflow:hidden}
     #player-wrapper{position:fixed;inset:0;width:100%;height:100%;background:#000}
-    #player{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;font-size:16px;text-align:center}
+    #player{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#fff;font-family:Arial,sans-serif;font-size:16px;text-align:center;position:relative}
     #player video{object-fit:contain !important;width:100% !important;height:100% !important;background-color:#000}
     .error-message{color:#ff4d4d;font-size:18px;font-weight:bold;background:rgba(0,0,0,0.6);padding:12px 20px;border-radius:6px}
 
-    body {margin:0;}
+    /* Clappr control tweaks (kept inline so no external CSS needed) */
     [data-player]{width:100%!important;height:100%!important;}
     [data-html5-video]{object-fit:fill;}
 
-    /* Spinner */
-    .spinner-three-bounce[data-spinner]{width:150px!important;}
-    .spinner-three-bounce[data-spinner]>div{
-      width:50px!important;height:50px!important;background-color:#eb2165!important;
-    }
-
-    /* Seekbar */
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar]{height:3px!important;}
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover .bar-background[data-seekbar]{height:5px!important;}
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]{top:-21px!important;}
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover{top:-22px!important;}
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-scrubber[data-seekbar] .bar-scrubber-icon[data-seekbar]{
-      top:11px!important;width:0!important;height:0!important;box-shadow:none!important;transition:.3s!important;
-    }
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar]:hover .bar-scrubber[data-seekbar] .bar-scrubber-icon[data-seekbar]{
-      top:5px!important;width:15px!important;height:15px!important;box-shadow:0 0 0 6px hsla(0,0%,100%,.2)!important;
-    }
-
-    /* Seek time */
-    .seek-time[data-seek-time]{background:#fff!important;}
-    .seek-time[data-seek-time] [data-duration]{color:#777!important;font-size:12px!important;}
-    .seek-time[data-seek-time] [data-seek-time]{color:#000!important;font-size:11px!important;}
-
-    /* Transparent fill */
-    .media-control[data-media-control] .media-control-layer[data-controls] .bar-container[data-seekbar] .bar-background[data-seekbar] .bar-fill-1[data-seekbar]{background:transparent!important;}
-
-    /* Volume */
-    .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume] svg{height:32px!important;top:-1px!important;}
-    .media-control[data-media-control] .media-control-layer[data-controls] .drawer-container[data-volume] .drawer-icon-container[data-volume] .drawer-icon[data-volume]{width:32px!important;height:40px!important;}
-
-    /* Icons */
-    .media-control[data-media-control] .media-control-icon{opacity:.8!important;}
-    .media-control[data-media-control] .media-control-icon:hover{opacity:1!important;}
-
-    /* Watermark */
-    [data-watermark]{top:4px!important;left:2px!important;float:left!important;opacity:.66!important;width:100px!important;transition:.3s;overflow:hidden;}
+    /* Quality control (custom fallback) */
+    #quality-control{position:absolute;top:10px;right:10px;z-index:9999;font-family:Arial,Helvetica,sans-serif}
+    #qc-btn{background:rgba(0,0,0,0.55);color:#fff;border:1px solid rgba(255,255,255,0.06);padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600}
+    #qc-menu{display:none;position:absolute;right:0;top:40px;background:rgba(10,10,10,0.95);padding:6px;border-radius:6px;min-width:130px;box-shadow:0 8px 20px rgba(0,0,0,0.6)}
+    #qc-menu.open{display:block}
+    .qc-item{padding:8px 10px;color:#fff;font-size:13px;cursor:pointer;border-radius:4px;text-align:left}
+    .qc-item:hover{background:rgba(255,255,255,0.04)}
+    /* small responsive tweak */
+    @media (max-width:420px){#qc-btn{padding:5px 8px;font-size:13px}}
   </style>
 </head>
 <body>
@@ -60,21 +33,27 @@
     <div id="player"></div>
   </div>
 
-  <!-- Clappr Core -->
+  <!-- Clappr core -->
   <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-  <!-- Plugins -->
+  <!-- HLS.js based playback for Clappr (needed to expose hls levels) -->
+  <script src="https://cdn.jsdelivr.net/npm/clappr-hlsjs-playback@latest/dist/clappr-hlsjs-playback.min.js"></script>
+  <!-- Level Selector plugin (optional; if it works it shows in player UI) -->
   <script src="https://cdn.jsdelivr.net/npm/level-selector@0.2.0/dist/level-selector.min.js"></script>
+  <!-- Audio track selector plugin (kept from your original) -->
   <script src="https://cdn.jsdelivr.net/npm/@c3voc/clappr-audio-track-selector@0.2.4/dist/audio-track-selector.min.js"></script>
 
   <script>
-    // ✅ Get URL from ?url=
     const urlParams = new URLSearchParams(window.location.search);
-    const streamUrl = urlParams.get("url") || "";
+    const streamUrl = (urlParams.get("url") || "").trim();
+
+    function showError(msg){
+      document.getElementById('player').innerHTML = "<p class='error-message'>❌ "+msg+"</p>";
+    }
 
     if(!streamUrl){
-      document.getElementById('player').innerHTML =
-        "<p class='error-message'>❌ No stream URL provided (use ?url=...)</p>";
+      showError("No stream URL provided — use ?url=YOUR_M3U8");
     } else {
+      // Create Clappr player
       var player = new Clappr.Player({
         parentId: "#player",
         source: streamUrl,
@@ -83,7 +62,8 @@
         autoPlay: true,
         mute: false,
         loop: false,
-        plugins: [LevelSelector, AudioTrackSelector],
+        // try to use LevelSelector if available; we still add custom fallback
+        plugins: (typeof LevelSelector !== "undefined") ? [LevelSelector, AudioTrackSelector] : [AudioTrackSelector],
         levelSelectorConfig: { title: "Quality" },
         audioTrackSelectorConfig: {
           title: "Audio",
@@ -91,17 +71,121 @@
         },
         mediacontrol: { seekbar: "#e92065", buttons: "#e92065" },
         playback: {
-          playInline: true,
-          crossOrigin: "anonymous",
-          hlsjsConfig: { capLevelToPlayerSize: true, maxBufferLength: 30 }
+          // this config is forwarded to clappr-hlsjs-playback (hls.js) if loaded
+          hlsjsConfig: { capLevelToPlayerSize: true, maxBufferLength: 30, maxMaxBufferLength: 60 }
         }
       });
 
-      // Error handler
+      // show friendly error when streamer unreachable
       player.on(Clappr.Events.PLAYER_ERROR, function(e){
-        document.getElementById('player').innerHTML =
-          "<p class='error-message'>⚠️ Stream unavailable or down !</p>";
+        showError("Stream unavailable or down !");
       });
+
+      // Extra check for playback element error
+      setTimeout(function(){
+        try{
+          if(player.core && player.core.mediaControl && player.core.mediaControl.el){
+            player.core.mediaControl.el.addEventListener && player.core.mediaControl.el.addEventListener("error", function(){ showError("Failed to load the stream"); });
+          }
+        }catch(err){}
+      },1000);
+
+      /* ---------------------------
+         Custom quality fallback UI
+         --------------------------- */
+      function attachQualityControl(){
+        if(document.getElementById('quality-control')) return;
+
+        const playerEl = document.getElementById('player');
+        const qc = document.createElement('div');
+        qc.id = 'quality-control';
+        qc.innerHTML = '<button id="qc-btn" aria-haspopup="true">Quality</button><div id="qc-menu"></div>';
+        playerEl.appendChild(qc);
+
+        const btn = document.getElementById('qc-btn');
+        const menu = document.getElementById('qc-menu');
+
+        btn.addEventListener('click', function(e){ e.stopPropagation(); menu.classList.toggle('open'); });
+        document.addEventListener('click', function(){ menu.classList.remove('open'); });
+
+        // wait for playback and hls instance
+        const tryAttach = function(){
+          const playback = player.core && player.core.activePlayback;
+          if(!playback){
+            return setTimeout(tryAttach, 300);
+          }
+          const hls = playback._hls; // clappr-hlsjs-playback usually stores hls.js instance here
+          if(!hls){
+            return setTimeout(tryAttach, 300);
+          }
+
+          const levels = hls.levels || [];
+          // if only one level — hide button
+          if(!levels || levels.length <= 1){
+            btn.style.display = 'none';
+            return;
+          }
+
+          // populate menu (Auto + each level)
+          menu.innerHTML = '';
+          const autoItem = document.createElement('div'); autoItem.className = 'qc-item'; autoItem.textContent = 'Auto'; autoItem.dataset.level = '-1';
+          menu.appendChild(autoItem);
+
+          levels.forEach(function(lvl, idx){
+            const label = lvl.height ? (lvl.height + 'p') : (lvl.bitrate ? Math.round(lvl.bitrate/1000) + ' kbps' : 'Level ' + idx);
+            const it = document.createElement('div');
+            it.className = 'qc-item';
+            it.textContent = label;
+            it.dataset.level = idx;
+            menu.appendChild(it);
+          });
+
+          // click handler
+          menu.addEventListener('click', function(ev){
+            const item = ev.target.closest('.qc-item');
+            if(!item) return;
+            ev.stopPropagation();
+            const level = parseInt(item.dataset.level, 10);
+            if(isNaN(level)) return;
+            try {
+              if(level === -1){
+                hls.currentLevel = -1; // AUTO
+              } else {
+                hls.currentLevel = level; // set specific quality
+              }
+              btn.textContent = (level === -1) ? 'Auto' : item.textContent;
+              menu.classList.remove('open');
+            } catch(err){
+              console.warn("Could not change level:", err);
+            }
+          });
+
+          // update button label on level switch (if Hls.Events available)
+          if(window.Hls && hls.on){
+            try {
+              hls.on(Hls.Events.LEVEL_SWITCHED, function(){
+                const cur = hls.currentLevel;
+                if(cur === -1){
+                  btn.textContent = 'Auto';
+                } else {
+                  const lvl = hls.levels[cur] || {};
+                  btn.textContent = lvl.height ? (lvl.height + 'p') : 'Quality';
+                }
+              });
+            } catch(e){}
+          }
+        }; // tryAttach
+
+        tryAttach();
+      } // attachQualityControl
+
+      // attach quality control when player is ready
+      player.on(Clappr.Events.PLAYER_READY, function(){
+        attachQualityControl();
+      });
+
+      // also try attaching after a delay (in case streams are slow)
+      setTimeout(attachQualityControl, 1500);
     }
   </script>
 </body>

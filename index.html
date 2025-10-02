@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
+<title>Final Embedded Player</title>
 <style>
   body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
   #player-wrapper { position: relative; width: 100%; max-width: 960px; height: 540px; background: #000; }
@@ -20,7 +20,8 @@
 <body>
 
 <div id="player-wrapper">
-  <iframe id="videoPlayer" src="" allowfullscreen allow="autoplay; fullscreen" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe>
+  <!-- iframe without sandbox -->
+  <iframe id="videoPlayer" src="" allowfullscreen allow="autoplay; fullscreen"></iframe>
 
   <div id="controls">
     <button id="playBtn">Play</button>
@@ -46,25 +47,27 @@
     iframe.contentWindow.postMessage({ command: cmd }, '*');
   }
 
+  // Play/Pause
   playBtn.addEventListener('click', () => {
     sendCommand('togglePlay');
   });
 
+  // Volume control
   volumeControl.addEventListener('input', () => {
     sendCommand({ command: 'setVolume', value: volumeControl.value });
   });
 
+  // Fullscreen
   fullscreenBtn.addEventListener('click', () => {
-    if (iframe.requestFullscreen) iframe.requestFullscreen();
-    else if (iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
-    else if (iframe.msRequestFullscreen) iframe.msRequestFullscreen();
+    const wrapper = document.getElementById('player-wrapper');
+    if (wrapper.requestFullscreen) wrapper.requestFullscreen();
+    else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen();
+    else if (wrapper.msRequestFullscreen) wrapper.msRequestFullscreen();
   });
 
   // Prevent iframe redirect
   window.addEventListener('message', e => {
-    if (e.data === 'redirect') {
-      console.log('Blocked redirect attempt from iframe');
-    }
+    if (e.data === 'redirect') console.log('Blocked redirect attempt from iframe');
   });
 </script>
 

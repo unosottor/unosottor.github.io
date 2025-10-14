@@ -2,156 +2,119 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TOUFIK OP</title>
-<script src="//content.jwplatform.com/libraries/SAHhwvZq.js"></script>
+<title>Live Stream - v5on</title>
+<script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-    body {
-        background-color: #000;
+    * {
         margin: 0;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        overflow-x: hidden;
+        padding: 0;
+        box-sizing: border-box;
     }
-    #video-container {
+    body {
+        background: #000;
+        min-height: 100vh;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        color: #fff;
+    }
+    #player-wrapper {
         position: relative;
         width: 100%;
-        aspect-ratio: 16/9;
-        margin: auto;
-        max-width: 100%;
+        height: 100vh;
     }
-    /* Logo Style */
-    #logo {
-        position: absolute;
-        top: 10px;
-        left: 15px;
-        font-size: 22px;
-        font-weight: bold;
-        color: #fff;
-        background: rgba(0,0,0,0.6);
-        padding: 6px 12px;
-        border-radius: 10px;
-        letter-spacing: 1px;
-        box-shadow: 0 0 10px rgba(255,255,255,0.2);
+    #player {
+        width: 100%;
+        height: 100%;
     }
-    /* Marquee text */
-    marquee {
+    .loading-screen {
         position: absolute;
-        bottom: 10px;
+        top: 0;
         left: 0;
         width: 100%;
-        color: #fff;
-        font-size: 16px;
-        font-weight: bold;
-    }
-    /* Player Control Buttons */
-    .player-controls {
-        position: absolute;
-        top: 10px;
-        right: 15px;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
         display: flex;
-        gap: 8px;
-    }
-    .control-btn {
-        background: rgba(255, 255, 255, 0.15);
-        border: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
         color: #fff;
-        font-size: 13px;
-        padding: 6px 10px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: 0.3s;
+        font-size: 1.2rem;
     }
-    .control-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
+    .loading-spinner {
+        font-size: 3rem;
+        color: #00b3ff;
+        margin-bottom: 20px;
+        animation: spin 1s linear infinite;
     }
-    /* Telegram Button */
-    .social-links {
-        margin-top: 20px;
-        text-align: center;
-    }
-    .social-links a {
-        display: inline-block;
-        margin: 5px;
-        padding: 8px 14px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 500;
-        color: #fff;
-    }
-    .telegram {
-        background: rgb(56, 156, 233);
-    }
-    .telegram svg {
-        height: 20px;
-        width: 20px;
-        vertical-align: middle;
-        margin-right: 6px;
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 </head>
 <body>
 
-<div id="video-container">
-    <div id="logo">TOUFIK OP</div>
-
-    <!-- Player Stretch Buttons -->
-    <div class="player-controls">
-        <button class="control-btn" onclick="setStretch('uniform')">Fit</button>
-        <button class="control-btn" onclick="setStretch('fill')">Fill</button>
-        <button class="control-btn" onclick="setStretch('zoom')">Zoom</button>
-    </div>
-
+<div id="player-wrapper">
     <div id="player"></div>
-    <marquee>🔥 Welcome to TOUFIK OP Streaming Zone 🔥</marquee>
-</div>
-
-<div class="social-links">
-    <a href="https://t.me/ToufikOP" class="telegram" target="_blank">
-        <svg viewBox="0 0 21 18" xmlns="">
-            <g fill="none">
-                <path d="M0.554,7.092 L19.117,0.078 C19.737,-0.156 20.429,0.156 20.663,0.776 
-                C20.841,1.259 20.711,1.805 20.327,2.149 L15.119,6.863 L9.669,11.094 
-                C9.274,11.404 8.73,11.384 8.355,11.048 L5.515,8.548 L2.214,11.525 
-                C1.708,11.988 0.906,11.68 0.821,10.985 L0.003,4.279 C-0.071,3.653 0.263,3.048 0.799,2.786 
-                L0.554,7.092 Z" fill="#ffffff"></path>
-            </g>
-        </svg>
-        JOIN US ON TELEGRAM
-    </a>
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner">🔴</div>
+        <h3>Loading Stream...</h3>
+    </div>
 </div>
 
 <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get('id');
+document.addEventListener('DOMContentLoaded', function() {
+    // URL থেকে id parameter নেওয়া
+    const videoId = new URLSearchParams(window.location.search).get('id');
 
-    let player;
-
-    if (videoId) {
-        const streamUrl = "https://pull.niues.live/live/stream-" + videoId + "_lsd.m3u8";
-
-        player = jwplayer("player").setup({
-            file: streamUrl,
-            type: "hls",
-            width: "100%",
-            aspectratio: "16:9",
-            autostart: true,
-            controls: true,
-            mute: false,
-            stretching: "zoom", // Default stretch
-        });
-    } else {
-        document.getElementById("player").innerHTML = "<p style='text-align:center;color:#fff;padding:20px;'>⚠️ No stream ID provided!</p>";
+    if (!videoId) {
+        document.getElementById('loadingScreen').innerHTML = `
+            <h3>No Stream ID Provided</h3>
+            <p>Please add ?id=streamID to the URL</p>
+        `;
+        return;
     }
 
-    // Stretch Mode Changer
-    function setStretch(mode) {
-        if (player) {
-            player.setConfig({ stretching: mode });
+    const streamURL = `https://pull.niues.live/live/stream-${videoId}_lsd.m3u8`;
+
+    const player = new Clappr.Player({
+        source: streamURL,
+        parentId: "#player",
+        autoPlay: true,
+        height: '100%',
+        width: '100%',
+        mute: false,
+        chromeless: false,
+        mediacontrol: { seekbar: "#00b3ff", buttons: "#00b3ff" },
+        hlsjsConfig: {
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90
+        },
+        events: {
+            onReady: function() {
+                document.getElementById('loadingScreen').style.display = 'none';
+            },
+            onError: function(error) {
+                document.getElementById('loadingScreen').innerHTML = `
+                    <div style="text-align:center;">
+                        <h3>Stream Error</h3>
+                        <p>Failed to load the stream. Please try again later.</p>
+                    </div>
+                `;
+                console.error('Clappr Player Error:', error);
+            }
         }
-    }
+    });
+
+    // Clean up on unload
+    window.addEventListener('beforeunload', function() {
+        if (player) player.destroy();
+    });
+});
 </script>
 
 </body>

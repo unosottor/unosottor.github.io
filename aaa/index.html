@@ -62,16 +62,16 @@
           let buttonHTML = '';
           if (hasDai && hasAdFree) {
             buttonHTML = `
-              <a href="/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-play mr-2"></i> Watch
               </a>
-              <a href="/player?url=${match.adfree_url}" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.adfree_url}" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-ad mr-2"></i> Ad-Free
               </a>
             `;
           } else if (hasDai) {
             buttonHTML = `
-              <a href="/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
+              <a href="/aaa/player?url=${match.dai_url}" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center shadow-md transition-all">
                 <i class="fas fa-play mr-2"></i> Watch
               </a>
             `;

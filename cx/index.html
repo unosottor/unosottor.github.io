@@ -2,26 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Stream - v5on</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title></title>
 <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <style>
-    * {
+    html, body {
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
-    }
-    body {
-        background: #000;
-        min-height: 100vh;
+        height: 100%;
+        width: 100%;
         overflow: hidden;
+        background: #000;
         font-family: Arial, sans-serif;
         color: #fff;
     }
     #player-wrapper {
         position: relative;
-        width: 100%;
+        width: 100vw;
         height: 100vh;
     }
     #player {
@@ -40,12 +38,12 @@
         justify-content: center;
         align-items: center;
         z-index: 1000;
-        color: #fff;
+        color: orange;
         font-size: 1.2rem;
     }
     .loading-spinner {
         font-size: 3rem;
-        color: #00b3ff;
+        color: orange;
         margin-bottom: 20px;
         animation: spin 1s linear infinite;
     }
@@ -67,7 +65,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // URL থেকে id parameter নেওয়া
     const videoId = new URLSearchParams(window.location.search).get('id');
 
     if (!videoId) {
@@ -84,16 +81,17 @@ document.addEventListener('DOMContentLoaded', function() {
         source: streamURL,
         parentId: "#player",
         autoPlay: true,
+        mute: false,
         height: '100%',
         width: '100%',
-        mute: false,
         chromeless: false,
-        mediacontrol: { seekbar: "#00b3ff", buttons: "#00b3ff" },
+        mediacontrol: { seekbar: "#FF7F00", buttons: "#FF7F00" },
         hlsjsConfig: {
             enableWorker: true,
             lowLatencyMode: true,
             backBufferLength: 90
         },
+        autoResize: true,
         events: {
             onReady: function() {
                 document.getElementById('loadingScreen').style.display = 'none';
@@ -110,7 +108,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Clean up on unload
+    // Fullscreen fix for mobile Chrome
+    function requestFullScreen(el) {
+        if (el.requestFullscreen) el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) el.msRequestFullscreen();
+    }
+
+    // Optional: automatically enter fullscreen in mobile landscape
+    window.addEventListener('click', function() {
+        requestFullScreen(document.getElementById('player-wrapper'));
+    });
+
     window.addEventListener('beforeunload', function() {
         if (player) player.destroy();
     });

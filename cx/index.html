@@ -1,121 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <!-- Clappr Player Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/level-selector@0.2.0/dist/level-selector.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@clappr/hlsjs-playback@1.0.1/dist/hlsjs-playback.min.js"></script>
-    
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            overflow: hidden;
-        }
-        #player {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        /* Prevent quality selector from overlapping live label */
-        .level-selector {
-            bottom: 45px !important; /* Move it a bit up */
-        }
-
-        /* Live text styling */
-        .clappr-live-label {
-            bottom: 10px !important;
-            left: 10px;
-            background: rgba(255, 0, 0, 0.8);
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-size: 12px;
-            z-index: 999;
-        }
-
-        /* Customize control buttons */
-        .media-control-right,
-        .media-control-left {
-            z-index: 999;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<script src="//content.jwplatform.com/libraries/SAHhwvZq.js"></script>
+<style>
+    body {
+        background-color: #000;
+        margin: 0;
+        color: #fff;
+        font-family: Arial, sans-serif;
+        overflow-x: hidden;
+    }
+    #video-container {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 16/9;
+        margin: auto;
+    }
+    #logo {
+        position: absolute;
+        top: 10px;
+        left: 15px;
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff; /* White text */
+        background: none; /* No transparency */
+        padding: 5px 10px;
+        border-radius: 8px;
+    }
+    marquee {
+        position: absolute;
+        bottom: 10px;
+        left: 0;
+        width: 100%;
+        color: #fff; /* White sliding text */
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .social-links {
+        margin-top: 15px;
+        text-align: center;
+    }
+    .social-links a {
+        display: inline-block;
+        margin: 5px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        color: #fff;
+    }
+    .telegram {
+        background: rgb(56, 156, 233);
+    }
+    .telegram svg {
+        height: 20px;
+        width: 20px;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+</style>
 </head>
 <body>
+
+<div id="video-container">
+    <div id="logo"></div>
     <div id="player"></div>
+    <marquee></marquee>
+</div>
 
-    <script>
-        // Prevent right-click
-        document.addEventListener("contextmenu", (event) => event.preventDefault());
+<div class="social-links">
+    <a href="" class="telegram" target="_blank">
+        <svg viewBox="0 0 21 18" xmlns="http://www.w3.org/2000/svg">
+            <g fill="none">
+                <path d="M0.554,7.092 L19.117,0.078 C19.737,-0.156 20.429,0.156 20.663,0.776 
+                C20.841,1.259 20.711,1.805 20.327,2.149 L15.119,6.863 L9.669,11.094 
+                C9.274,11.404 8.73,11.384 8.355,11.048 L5.515,8.548 L2.214,11.525 
+                C1.708,11.988 0.906,11.68 0.821,10.985 L0.003,4.279 C-0.071,3.653 0.263,3.048 0.799,2.786 
+                L0.554,7.092 Z" fill="#ffffff"></path>
+            </g>
+        </svg>
+        JOIN US ON TELEGRAM
+    </a>
+</div>
 
-        function getQueryParam(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoId = urlParams.get('id');
 
-        function createPlayer(sourceUrl) {
-            var player = new Clappr.Player({ 
-                source: sourceUrl,
-                width: '100%', 
-                height: '100%', 
-                autoPlay: true, 
-                plugins: [HlsjsPlayback, LevelSelector],
-                mimeType: "application/x-mpegURL", 
-                parentId: "#player",
-                mediacontrol: {
-                    seekbar: "#ff0000",
-                    buttons: "#eee",
-                    enable: true
-                },
-            }); 
+    if (videoId) {
+        const streamUrl = "https://pull.niues.live/live/stream-" + videoId + "_lsd.m3u8";
 
-            // Ensure live label shows properly
-            player.on(Clappr.Events.PLAYER_READY, function() {
-                // Add live text
-                var liveLabel = document.createElement("div");
-                liveLabel.className = "clappr-live-label";
-                liveLabel.innerText = "LIVE";
-                player.core.el.appendChild(liveLabel);
-            });
+        jwplayer("player").setup({
+            file: streamUrl,
+            type: "hls",
+            width: "100%",
+            aspectratio: "16:9",
+            autostart: true,
+            controls: true,
+            mute: false, // 🔇 Unmute button removed, starts with sound
+            stretching: "exactfit",
+        });
+    } else {
+        document.getElementById("player").innerHTML = "<p style='text-align:center;color:#fff;padding:20px;'>⚠️ No stream ID provided!</p>";
+    }
+</script>
 
-            // Fix Play/Pause button behavior
-            player.on(Clappr.Events.PLAYER_PAUSE, function() {
-                // Do nothing special; just pause
-            });
-
-            player.on(Clappr.Events.PLAYER_PLAY, function() {
-                // Resume play without reloading
-            });
-
-            // Retry on error
-            player.on(Clappr.Events.PLAYER_ERROR, function() {
-                setTimeout(function() {
-                    player.play(); // just try to resume
-                }, 500); 
-            });
-
-            return player;
-        }
-
-        var channelId = getQueryParam('id');
-        
-        if (channelId) {
-            const sourceUrl = `https://pull.niues.live/live/stream-${videoId}_lsd.m3u8`;
-            createPlayer(sourceUrl);
-        } else {
-            console.error("No channel ID provided");
-        }
-    </script>
 </body>
 </html>

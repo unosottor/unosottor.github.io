@@ -1,130 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title></title>
-<script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-        width: 100%;
-        overflow: hidden;
-        background: #000;
-        font-family: Arial, sans-serif;
-        color: #fff;
-    }
-    #player-wrapper {
-        position: relative;
-        width: 100vw;
-        height: 100vh;
-    }
-    #player {
-        width: 100%;
-        height: 100%;
-    }
-    .loading-screen {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.9);
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        z-index: 1000;
-        color: orange;
-        font-size: 1.2rem;
-    }
-    .loading-spinner {
-        font-size: 3rem;
-        color: orange;
-        margin-bottom: 20px;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <!-- Clappr Player Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/clappr@latest/dist/clappr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/level-selector@0.2.0/dist/level-selector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@clappr/hlsjs-playback@1.0.1/dist/hlsjs-playback.min.js"></script>
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+        }
+        #player {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Prevent quality selector from overlapping live label */
+        .level-selector {
+            bottom: 45px !important; /* Move it a bit up */
+        }
+
+        /* Live text styling */
+        .clappr-live-label {
+            bottom: 10px !important;
+            left: 10px;
+            background: rgba(255, 0, 0, 0.8);
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            z-index: 999;
+        }
+
+        /* Customize control buttons */
+        .media-control-right,
+        .media-control-left {
+            z-index: 999;
+        }
+    </style>
 </head>
 <body>
-
-<div id="player-wrapper">
     <div id="player"></div>
-    <div class="loading-screen" id="loadingScreen">
-        <div class="loading-spinner">🔴</div>
-        <h3>Loading Stream...</h3>
-    </div>
-</div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const videoId = new URLSearchParams(window.location.search).get('id');
+    <script>
+        // Prevent right-click
+        document.addEventListener("contextmenu", (event) => event.preventDefault());
 
-    if (!videoId) {
-        document.getElementById('loadingScreen').innerHTML = `
-            <h3>No Stream ID Provided</h3>
-            <p>Please add ?id=streamID to the URL</p>
-        `;
-        return;
-    }
-
-    const streamURL = `https://pull.niues.live/live/stream-${videoId}_lsd.m3u8`;
-
-    const player = new Clappr.Player({
-        source: streamURL,
-        parentId: "#player",
-        autoPlay: true,
-        mute: false,
-        height: '100%',
-        width: '100%',
-        chromeless: false,
-        mediacontrol: { seekbar: "#FF7F00", buttons: "#FF7F00" },
-        hlsjsConfig: {
-            enableWorker: true,
-            lowLatencyMode: true,
-            backBufferLength: 90
-        },
-        autoResize: true,
-        events: {
-            onReady: function() {
-                document.getElementById('loadingScreen').style.display = 'none';
-            },
-            onError: function(error) {
-                document.getElementById('loadingScreen').innerHTML = `
-                    <div style="text-align:center;">
-                        <h3>Stream Error</h3>
-                        <p>Failed to load the stream. Please try again later.</p>
-                    </div>
-                `;
-                console.error('Clappr Player Error:', error);
-            }
+        function getQueryParam(name) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
         }
-    });
 
-    // Fullscreen fix for mobile Chrome
-    function requestFullScreen(el) {
-        if (el.requestFullscreen) el.requestFullscreen();
-        else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-        else if (el.msRequestFullscreen) el.msRequestFullscreen();
-    }
+        function createPlayer(sourceUrl) {
+            var player = new Clappr.Player({ 
+                source: sourceUrl,
+                width: '100%', 
+                height: '100%', 
+                autoPlay: true, 
+                plugins: [HlsjsPlayback, LevelSelector],
+                mimeType: "application/x-mpegURL", 
+                parentId: "#player",
+                mediacontrol: {
+                    seekbar: "#ff0000",
+                    buttons: "#eee",
+                    enable: true
+                },
+            }); 
 
-    // Optional: automatically enter fullscreen in mobile landscape
-    window.addEventListener('click', function() {
-        requestFullScreen(document.getElementById('player-wrapper'));
-    });
+            // Ensure live label shows properly
+            player.on(Clappr.Events.PLAYER_READY, function() {
+                // Add live text
+                var liveLabel = document.createElement("div");
+                liveLabel.className = "clappr-live-label";
+                liveLabel.innerText = "LIVE";
+                player.core.el.appendChild(liveLabel);
+            });
 
-    window.addEventListener('beforeunload', function() {
-        if (player) player.destroy();
-    });
-});
-</script>
+            // Fix Play/Pause button behavior
+            player.on(Clappr.Events.PLAYER_PAUSE, function() {
+                // Do nothing special; just pause
+            });
 
+            player.on(Clappr.Events.PLAYER_PLAY, function() {
+                // Resume play without reloading
+            });
+
+            // Retry on error
+            player.on(Clappr.Events.PLAYER_ERROR, function() {
+                setTimeout(function() {
+                    player.play(); // just try to resume
+                }, 500); 
+            });
+
+            return player;
+        }
+
+        var channelId = getQueryParam('id');
+        
+        if (channelId) {
+            const sourceUrl = `https://pull.niues.live/live/stream-${videoId}_lsd.m3u8`;
+            createPlayer(sourceUrl);
+        } else {
+            console.error("No channel ID provided");
+        }
+    </script>
 </body>
 </html>

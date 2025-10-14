@@ -17,32 +17,58 @@
     #video-container {
         position: relative;
         width: 100%;
-        max-width: 100%;
         aspect-ratio: 16/9;
         margin: auto;
+        max-width: 100%;
     }
+    /* Logo Style */
     #logo {
         position: absolute;
         top: 10px;
         left: 15px;
-        font-size: 20px;
+        font-size: 22px;
         font-weight: bold;
-        color: #fff; /* White text */
-        background: none; /* No transparency */
-        padding: 5px 10px;
-        border-radius: 8px;
+        color: #fff;
+        background: rgba(0,0,0,0.6);
+        padding: 6px 12px;
+        border-radius: 10px;
+        letter-spacing: 1px;
+        box-shadow: 0 0 10px rgba(255,255,255,0.2);
     }
+    /* Marquee text */
     marquee {
         position: absolute;
         bottom: 10px;
         left: 0;
         width: 100%;
-        color: #fff; /* White sliding text */
+        color: #fff;
         font-size: 16px;
         font-weight: bold;
     }
+    /* Player Control Buttons */
+    .player-controls {
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        display: flex;
+        gap: 8px;
+    }
+    .control-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        font-size: 13px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .control-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+    }
+    /* Telegram Button */
     .social-links {
-        margin-top: 15px;
+        margin-top: 20px;
         text-align: center;
     }
     .social-links a {
@@ -70,8 +96,16 @@
 
 <div id="video-container">
     <div id="logo">TOUFIK OP</div>
+
+    <!-- Player Stretch Buttons -->
+    <div class="player-controls">
+        <button class="control-btn" onclick="setStretch('uniform')">Fit</button>
+        <button class="control-btn" onclick="setStretch('fill')">Fill</button>
+        <button class="control-btn" onclick="setStretch('zoom')">Zoom</button>
+    </div>
+
     <div id="player"></div>
-    <marquee></marquee>
+    <marquee>🔥 Welcome to TOUFIK OP Streaming Zone 🔥</marquee>
 </div>
 
 <div class="social-links">
@@ -93,21 +127,30 @@
     const urlParams = new URLSearchParams(window.location.search);
     const videoId = urlParams.get('id');
 
+    let player;
+
     if (videoId) {
         const streamUrl = "https://pull.niues.live/live/stream-" + videoId + "_lsd.m3u8";
 
-        jwplayer("player").setup({
+        player = jwplayer("player").setup({
             file: streamUrl,
             type: "hls",
             width: "100%",
             aspectratio: "16:9",
             autostart: true,
             controls: true,
-            mute: false, // 
-            stretching: "zoom",
+            mute: false,
+            stretching: "zoom", // Default stretch
         });
     } else {
         document.getElementById("player").innerHTML = "<p style='text-align:center;color:#fff;padding:20px;'>⚠️ No stream ID provided!</p>";
+    }
+
+    // Stretch Mode Changer
+    function setStretch(mode) {
+        if (player) {
+            player.setConfig({ stretching: mode });
+        }
     }
 </script>
 

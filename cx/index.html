@@ -1,115 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="referrer" content="no-referrer">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
-<script src="//content.jwplatform.com/libraries/SAHhwvZq.js"></script>
-<style>
-    body {
-        background-color: #000;
-        margin: 0;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        overflow-x: hidden;
+  <title></title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Enjoy Free Live TV" />
+  <meta name="keywords" content="Live Sports Streaming, Free IPTV" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <link rel="icon" href="" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.css" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      font-family: sans-serif;
+      color: #fff;
+      text-align: center;
     }
-    #video-container {
-        position: relative;
-        width: 100%;
-        max-width: 100%;
-        aspect-ratio: 16/9;
-        margin: auto;
+    video {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background-color: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(255, 136, 0, 0.4);
     }
-    #logo {
-        position: absolute;
-        top: 10px;
-        left: 15px;
-        font-size: 20px;
-        font-weight: bold;
-        color: #fff; /* White text */
-        background: none; /* No transparency */
-        padding: 5px 10px;
-        border-radius: 8px;
+    .telegram-button {
+      margin: 20px auto;
+      display: inline-block;
+      background-color: #ff7b00;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(255, 136, 0, 0.3);
+      transition: background 0.3s ease, transform 0.2s ease;
     }
-    marquee {
-        position: absolute;
-        bottom: 10px;
-        left: 0;
-        width: 100%;
-        color: #fff; /* White sliding text */
-        font-size: 16px;
-        font-weight: bold;
+    .telegram-button:hover {
+      background-color: #e96e00;
+      transform: scale(1.05);
     }
-    .social-links {
-        margin-top: 15px;
-        text-align: center;
-    }
-    .social-links a {
-        display: inline-block;
-        margin: 5px;
-        padding: 8px 14px;
-        border-radius: 8px;
-        text-decoration: none;
-        font-size: 16px;
-        font-weight: 500;
-        color: #fff;
-    }
-    .telegram {
-        background: rgb(56, 156, 233);
-    }
-    .telegram svg {
-        height: 20px;
-        width: 20px;
-        vertical-align: middle;
-        margin-right: 6px;
-    }
-</style>
+  </style>
 </head>
 <body>
+  <video id="player" controls autoplay muted playsinline crossorigin></video>
 
-<div id="video-container">
-    <div id="logo"></div>
-    <div id="player"></div>
-    <marquee></marquee>
-</div>
-
-<div class="social-links">
-    <a href="" class="telegram" target="_blank">
-        <svg viewBox="0 0 21 18" xmlns="http://www.w3.org/2000/svg">
-            <g fill="none">
-                <path d="M0.554,7.092 L19.117,0.078 C19.737,-0.156 20.429,0.156 20.663,0.776 
-                C20.841,1.259 20.711,1.805 20.327,2.149 L15.119,6.863 L9.669,11.094 
-                C9.274,11.404 8.73,11.384 8.355,11.048 L5.515,8.548 L2.214,11.525 
-                C1.708,11.988 0.906,11.68 0.821,10.985 L0.003,4.279 C-0.071,3.653 0.263,3.048 0.799,2.786 
-                L0.554,7.092 Z" fill="#ffffff"></path>
-            </g>
-        </svg>
-        JOIN US ON TELEGRAM
+  <!-- 🔸 Telegram Button -->
+  <div>
+    <a href="https://t.me/+b17D46rrBAw0ZTM1" target="_blank" class="telegram-button">
+      Join Us Telegram 
     </a>
-</div>
+  </div>
 
-<script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.1.4/dist/hls.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/plyr@3.6.12/dist/plyr.min.js"></script>
+  <script>
+    const video = document.getElementById("player");
     const urlParams = new URLSearchParams(window.location.search);
-    const videoId = urlParams.get('id');
+    const videoId = urlParams.get("id");
 
-    if (videoId) {
-        const streamUrl = "https://pull.niues.live/live/stream-" + videoId + "_lsd.m3u8";
-
-        jwplayer("player").setup({
-            file: streamUrl,
-            type: "hls",
-            width: "100%",
-            aspectratio: "16:9",
-            autostart: true,
-            controls: true,
-            mute: false, // 🔇 Unmute button removed, starts with sound
-            stretching: "exactfit",
+    // Landscape orientation lock when fullscreen
+    function lockOrientationIfFullscreen() {
+      const isFullscreen =
+        document.fullscreenElement || document.webkitFullscreenElement;
+      if (isFullscreen && screen.orientation && screen.orientation.lock) {
+        screen.orientation.lock("landscape").catch((err) => {
+          console.warn("Orientation lock failed:", err);
         });
-    } else {
-        document.getElementById("player").innerHTML = "<p style='text-align:center;color:#fff;padding:20px;'>⚠️ No stream ID provided!</p>";
+      }
     }
-</script>
+    document.addEventListener("fullscreenchange", lockOrientationIfFullscreen);
+    document.addEventListener("webkitfullscreenchange", lockOrientationIfFullscreen);
 
+    if (!videoId) {
+      alert("❌ No ID provided.\nUse: ?id=channelname");
+    } else {
+      const streamURL = `https://pull.niues.live/live/stream-${videoId}_lsd.m3u8`;
+
+      if (Hls.isSupported()) {
+        const hls = new Hls({ maxMaxBufferLength: 120 });
+        hls.loadSource(streamURL);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          const heights = hls.levels.map(l => l.height).sort((a, b) => b - a);
+          const uniqueHeights = [...new Set(heights)];
+          const plyr = new Plyr(video, {
+            muted: true,
+            storage: { enabled: false },
+            quality: {
+              default: uniqueHeights[0],
+              options: uniqueHeights,
+              forced: true,
+              onChange: (val) => {
+                hls.levels.forEach((level, i) => {
+                  if (level.height === val) hls.currentLevel = i;
+                });
+              }
+            }
+          });
+          video.play().catch(err => console.warn("Autoplay failed:", err));
+        });
+      } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = streamURL;
+        new Plyr(video, { muted: true, storage: { enabled: false } });
+        video.play().catch(err => console.warn("Autoplay fallback failed:", err));
+      } else {
+        alert("Your browser does not support HLS playback.");
+      }
+    }
+  </script>
 </body>
 </html>

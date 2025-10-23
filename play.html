@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title> Player LIVE TV | Powered By Toufik OP</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- JW Player Scripts -->
+  <script src="https://content.jwplatform.com/libraries/KB5zFt7A.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@hola.org/jwplayer-hlsjs@latest/dist/jwplayer.hlsjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@0.14.17"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+    }
+    #player {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .jwplayer {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+
+  <script>
+    async function loadPlayer(source) {
+      const player = jwplayer("player");
+      player.setup({
+        file: source,
+        type: "hls",
+        width: "100%",
+        aspectratio: "16:9",
+        autostart: true,
+        mute: false,
+        preload: "auto",
+        image: "https://anym3u8player.com/live.gif",
+        primary: "html5",
+        hlsjsdefault: true,
+        hlsjsConfig: {
+          maxBufferLength: 30,
+          liveSyncDuration: 5
+        }
+      });
+      jwplayer_hls_provider.attach();
+    }
+
+    async function init() {
+      const params = new URLSearchParams(window.location.search);
+      const url = params.get("url");
+      const id = params.get("id");
+
+      if (url) {
+        loadPlayer(decodeURIComponent(url));
+      } else if (id) {
+        try {
+          const res = await fetch("https://api.unosottor.workers.dev/json/1");
+          const json = await res.json();
+          if (json[id] && json[id].file) {
+            loadPlayer(json[id].file);
+          } else {
+            document.body.innerHTML = "<h2 style='color:white;text-align:center;padding:20px;'>Invalid Channel ID</h2>";
+          }
+        } catch (e) {
+          document.body.innerHTML = "<h2 style='color:white;text-align:center;padding:20px;'>Failed to load channel</h2>";
+        }
+      } else {
+        document.body.innerHTML = "<h2 style='color:white;text-align:center;padding:20px;'>No URL or ID provided</h2>";
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

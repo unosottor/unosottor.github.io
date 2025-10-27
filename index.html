@@ -2,17 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Player Plus</title>
+  <title>Live Player</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
   <style>
-    body {background:#000;color:#fff;font-family:sans-serif;margin:0;text-align:center;}
-    header {display:flex;align-items:center;gap:10px;padding:10px;background:#101010;}
-    header img{height:40px;border-radius:8px;}
-    #video-container{max-width:960px;margin:10px auto;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;}
-    video{width:100%;height:100%;}
-    #loading{margin-top:20px;color:#ccc;}
+    body {
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      text-align: center;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #101010;
+      padding: 10px;
+      border-bottom: 1px solid #333;
+    }
+    header img {
+      height: 40px;
+      border-radius: 6px;
+    }
+    header h3 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    #video-container {
+      max-width: 960px;
+      margin: 20px auto;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+    }
+    #loading {
+      color: #ccc;
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
@@ -23,76 +56,74 @@
   <div id="loading">⏳ Loading stream...</div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const id = params.get("id");
-    const dataParam = params.get("data");
     const playlistURL = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
+    const id = new URLSearchParams(window.location.search).get("id");
 
-    // Decode cookie if passed in hash (some browsers hide # part)
-    if (location.hash && !dataParam) {
-      console.log("Hash found:", location.hash);
+    if (!id) {
+      document.getElementById("loading").innerText = "❌ Missing ?id=";
+      throw new Error("No channel ID found!");
     }
 
-    async function fromPlaylist(channelId) {
+    async function getChannelData() {
       const text = await fetch(playlistURL).then(r => r.text());
       const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      let idx = lines.findIndex(l => l.includes(`tvg-id="${channelId}"`));
-      if (idx === -1) throw new Error("Channel not found!");
+      const index = lines.findIndex(l => l.includes(`tvg-id="${id}"`));
+      if (index === -1) throw new Error("Channel not found in playlist!");
 
-      const info = lines[idx];
-      const keyLine = lines[idx + 1];
-      const uaLine = lines[idx + 2];
-      const cookieLine = lines[idx + 3];
-      const urlLine = lines[idx + 4];
+      const info = lines[index];
+      const keyLine = lines[index + 1];
+      const uaLine = lines[index + 2];
+      const cookieLine = lines[index + 3];
+      const manifestLine = lines[index + 4];
 
-      return {
-        id: channelId,
-        name: info.split(",")[1]?.trim(),
-        logo: (info.match(/tvg-logo="(.*?)"/) || [])[1],
-        group: (info.match(/group-title="(.*?)"/) || [])[1],
-        clearKeyId: keyLine.split("=")[1].split(":")[0],
-        clearKeyKey: keyLine.split("=")[1].split(":")[1],
-        userAgent: uaLine.split("=")[1],
-        cookie: (cookieLine.match(/"cookie":"(.*?)"/) || [])[1],
-        manifestUri: urlLine.trim()
-      };
+      const name = info.split(",")[1]?.trim();
+      const logo = (info.match(/tvg-logo="(.*?)"/) || [])[1];
+      const group = (info.match(/group-title="(.*?)"/) || [])[1];
+      const keyPair = keyLine.split("=").pop().trim();
+      const [keyId, key] = keyPair.split(":");
+      const userAgent = uaLine.split("=")[1]?.trim();
+      const cookie = (cookieLine.match(/"cookie":"(.*?)"/) || [])[1];
+      const manifestUri = manifestLine.trim();
+
+      return { id, name, logo, group, keyId, key, userAgent, cookie, manifestUri };
     }
 
     async function initPlayer() {
       try {
-        let ch;
-        if (dataParam) {
-          ch = JSON.parse(decodeURIComponent(dataParam));
-        } else if (id) {
-          ch = await fromPlaylist(id);
-        } else {
-          throw new Error("Missing ?id= or ?data=");
-        }
-
+        const ch = await getChannelData();
         document.getElementById("loading").remove();
-        document.getElementById("header").innerHTML =
-          `<img src="${ch.logo}"><h3>${ch.name}</h3>`;
+
+        document.getElementById("header").innerHTML = `
+          <img src="${ch.logo}" alt="logo">
+          <h3>${ch.name}</h3>
+        `;
 
         const video = document.getElementById("video");
         const player = new shaka.Player(video);
 
         player.getNetworkingEngine().registerRequestFilter((type, request) => {
-          if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-              type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+          if (
+            type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+            type === shaka.net.NetworkingEngine.RequestType.SEGMENT
+          ) {
             if (ch.userAgent) request.headers["User-Agent"] = ch.userAgent;
             if (ch.cookie) request.headers["Cookie"] = ch.cookie;
           }
         });
 
         player.configure({
-          drm: { clearKeys: { [ch.clearKeyId]: ch.clearKeyKey } }
+          drm: {
+            clearKeys: {
+              [ch.keyId]: ch.key
+            }
+          }
         });
 
         await player.load(ch.manifestUri);
-        console.log("✅ Playing:", ch.name);
+        console.log("✅ Now Playing:", ch.name);
       } catch (err) {
-        document.getElementById("loading").innerText = "❌ Failed: " + err.message;
-        console.error(err);
+        console.error("❌ Error:", err);
+        document.getElementById("loading").innerText = "❌ " + err.message;
       }
     }
 

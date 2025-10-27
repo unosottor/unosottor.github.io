@@ -2,71 +2,72 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>JioTV Player</title>
+<title></title>(Direct Mode)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.min.js"></script>
 <style>
   body {margin:0;background:#000;color:#fff;text-align:center;font-family:sans-serif;}
-  #video {width:100%;max-width:100%;height:60vh;background:#000;}
-  #loading {margin-top:20px;}
+  #video {width:100%;height:60vh;background:#000;}
+  #info {padding:10px;}
 </style>
 </head>
 <body>
 <video id="video" controls autoplay></video>
-<div id="loading">Loading channel...</div>
+<div id="info">Loading channel...</div>
+
 <script>
 async function loadChannel() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("id");
-  if (!id) return alert("No channel id!");
+  const id = new URLSearchParams(location.search).get("id");
+  if (!id) {
+    document.getElementById("info").innerText = "Missing id!";
+    return;
+  }
 
   const m3uUrl = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
   const res = await fetch(m3uUrl);
   const text = await res.text();
 
-  const blocks = text.split("#EXTINF");
-  let block = blocks.find(b => b.includes(`tvg-id="${id}"`));
-  if (!block) return alert("Channel not found!");
+  const block = text.split("#EXTINF").find(b => b.includes(`tvg-id="${id}"`));
+  if (!block) {
+    document.getElementById("info").innerText = "Channel not found!";
+    return;
+  }
 
-  const keyMatch = block.match(/#KODIPROP:inputstream\.adaptive\.license_key=(.*?):(.*)/);
-  const uaMatch = block.match(/#EXTVLCOPT:http-user-agent=(.*)/);
-  const cookieMatch = block.match(/#EXTHTTP:\{"cookie":"(.*?)"\}/);
-  const urlMatch = block.match(/(https:\/\/[^\s]+)/);
-
-  const keyId = keyMatch ? keyMatch[1].trim() : "";
-  const key = keyMatch ? keyMatch[2].trim() : "";
-  const userAgent = uaMatch ? uaMatch[1].trim() : "";
-  const cookie = cookieMatch ? cookieMatch[1].trim() : "";
-  const manifest = urlMatch ? urlMatch[1].trim() : "";
-
-  if (!manifest) return alert("No stream URL found!");
+  const name = (block.match(/,(.*)/) || [])[1]?.trim() || "Unknown";
+  const logo = (block.match(/tvg-logo="(.*?)"/) || [])[1] || "";
+  const keyPair = (block.match(/#KODIPROP:inputstream\.adaptive\.license_key=(.*?):(.*)/) || []);
+  const keyId = keyPair[1]?.trim();
+  const key = keyPair[2]?.trim();
+  const ua = (block.match(/#EXTVLCOPT:http-user-agent=(.*)/) || [])[1]?.trim();
+  const cookie = (block.match(/#EXTHTTP:\{"cookie":"(.*?)"\}/) || [])[1]?.trim();
+  const manifest = (block.match(/(https:\/\/[^\s]+)/) || [])[1]?.trim();
 
   const video = document.getElementById("video");
   const player = new shaka.Player(video);
 
-  // Set request filters
-  player.getNetworkingEngine().registerRequestFilter((type, request) => {
-    if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-        type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
-      if (cookie) request.headers["cookie"] = cookie;
-      if (userAgent) request.headers["User-Agent"] = userAgent;
-    }
-  });
+  // configure ClearKey DRM
+  if (keyId && key) {
+    player.configure({ drm: { clearKeys: { [keyId]: key } } });
+  }
 
   player.configure({
-    drm: {
-      clearKeys: {
-        [keyId]: key
-      }
-    }
+    streaming: { lowLatencyMode: true },
+    manifest: { retryParameters: { maxAttempts: 3 } }
   });
 
   try {
     await player.load(manifest);
-    document.getElementById("loading").innerText = "";
+    document.getElementById("info").innerHTML = `
+      <img src="${logo}" height="50"><br>
+      <b>${name}</b><br>
+      <small>${id}</small><br>
+      <small style="color:#aaa;">${ua ? "User-Agent detected ✅" : "No UA"}</small>
+    `;
   } catch (err) {
     console.error(err);
-    document.getElementById("loading").innerText = "Playback error!";
+    document.getElementById("info").innerHTML =
+      `<b style='color:red'>Playback Error:</b> ${err.message}<br>
+       <small>If this link requires Cookie/User-Agent, browser cannot send them directly.</small>`;
   }
 }
 

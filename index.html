@@ -1,133 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Live Player</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
-  <style>
-    body {
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      margin: 0;
-      text-align: center;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      background: #101010;
-      padding: 10px;
-      border-bottom: 1px solid #333;
-    }
-    header img {
-      height: 40px;
-      border-radius: 6px;
-    }
-    header h3 {
-      font-size: 1.1rem;
-      margin: 0;
-    }
-    #video-container {
-      max-width: 960px;
-      margin: 20px auto;
-      aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-    }
-    #loading {
-      color: #ccc;
-      margin-top: 20px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>JioTV Player</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.min.js"></script>
+<style>
+  body {margin:0;background:#000;color:#fff;text-align:center;font-family:sans-serif;}
+  #video {width:100%;max-width:100%;height:60vh;background:#000;}
+  #loading {margin-top:20px;}
+</style>
 </head>
 <body>
-  <header id="header"></header>
-  <div id="video-container">
-    <video id="video" autoplay controls></video>
-  </div>
-  <div id="loading">⏳ Loading stream...</div>
+<video id="video" controls autoplay></video>
+<div id="loading">Loading channel...</div>
+<script>
+async function loadChannel() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("id");
+  if (!id) return alert("No channel id!");
 
-  <script>
-    const playlistURL = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
-    const id = new URLSearchParams(window.location.search).get("id");
+  const m3uUrl = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
+  const res = await fetch(m3uUrl);
+  const text = await res.text();
 
-    if (!id) {
-      document.getElementById("loading").innerText = "❌ Missing ?id=";
-      throw new Error("No channel ID found!");
+  const blocks = text.split("#EXTINF");
+  let block = blocks.find(b => b.includes(`tvg-id="${id}"`));
+  if (!block) return alert("Channel not found!");
+
+  const keyMatch = block.match(/#KODIPROP:inputstream\.adaptive\.license_key=(.*?):(.*)/);
+  const uaMatch = block.match(/#EXTVLCOPT:http-user-agent=(.*)/);
+  const cookieMatch = block.match(/#EXTHTTP:\{"cookie":"(.*?)"\}/);
+  const urlMatch = block.match(/(https:\/\/[^\s]+)/);
+
+  const keyId = keyMatch ? keyMatch[1].trim() : "";
+  const key = keyMatch ? keyMatch[2].trim() : "";
+  const userAgent = uaMatch ? uaMatch[1].trim() : "";
+  const cookie = cookieMatch ? cookieMatch[1].trim() : "";
+  const manifest = urlMatch ? urlMatch[1].trim() : "";
+
+  if (!manifest) return alert("No stream URL found!");
+
+  const video = document.getElementById("video");
+  const player = new shaka.Player(video);
+
+  // Set request filters
+  player.getNetworkingEngine().registerRequestFilter((type, request) => {
+    if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+        type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+      if (cookie) request.headers["cookie"] = cookie;
+      if (userAgent) request.headers["User-Agent"] = userAgent;
     }
+  });
 
-    async function getChannelData() {
-      const text = await fetch(playlistURL).then(r => r.text());
-      const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      const index = lines.findIndex(l => l.includes(`tvg-id="${id}"`));
-      if (index === -1) throw new Error("Channel not found in playlist!");
-
-      const info = lines[index];
-      const keyLine = lines[index + 1];
-      const uaLine = lines[index + 2];
-      const cookieLine = lines[index + 3];
-      const manifestLine = lines[index + 4];
-
-      const name = info.split(",")[1]?.trim();
-      const logo = (info.match(/tvg-logo="(.*?)"/) || [])[1];
-      const group = (info.match(/group-title="(.*?)"/) || [])[1];
-      const keyPair = keyLine.split("=").pop().trim();
-      const [keyId, key] = keyPair.split(":");
-      const userAgent = uaLine.split("=")[1]?.trim();
-      const cookie = (cookieLine.match(/"cookie":"(.*?)"/) || [])[1];
-      const manifestUri = manifestLine.trim();
-
-      return { id, name, logo, group, keyId, key, userAgent, cookie, manifestUri };
-    }
-
-    async function initPlayer() {
-      try {
-        const ch = await getChannelData();
-        document.getElementById("loading").remove();
-
-        document.getElementById("header").innerHTML = `
-          <img src="${ch.logo}" alt="logo">
-          <h3>${ch.name}</h3>
-        `;
-
-        const video = document.getElementById("video");
-        const player = new shaka.Player(video);
-
-        player.getNetworkingEngine().registerRequestFilter((type, request) => {
-          if (
-            type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
-            type === shaka.net.NetworkingEngine.RequestType.SEGMENT
-          ) {
-            if (ch.userAgent) request.headers["User-Agent"] = ch.userAgent;
-            if (ch.cookie) request.headers["Cookie"] = ch.cookie;
-          }
-        });
-
-        player.configure({
-          drm: {
-            clearKeys: {
-              [ch.keyId]: ch.key
-            }
-          }
-        });
-
-        await player.load(ch.manifestUri);
-        console.log("✅ Now Playing:", ch.name);
-      } catch (err) {
-        console.error("❌ Error:", err);
-        document.getElementById("loading").innerText = "❌ " + err.message;
+  player.configure({
+    drm: {
+      clearKeys: {
+        [keyId]: key
       }
     }
+  });
 
-    document.addEventListener("DOMContentLoaded", initPlayer);
-  </script>
+  try {
+    await player.load(manifest);
+    document.getElementById("loading").innerText = "";
+  } catch (err) {
+    console.error(err);
+    document.getElementById("loading").innerText = "Playback error!";
+  }
+}
+
+loadChannel();
+</script>
 </body>
 </html>

@@ -2,54 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Player</title>
+  <title>Player Plus</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
   <style>
-    body {
-      background-color: #000;
-      color: #fff;
-      font-family: "Poppins", sans-serif;
-      margin: 0;
-      padding: 0;
-      text-align: center;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 20px;
-      background: #101010;
-      border-bottom: 1px solid #222;
-    }
-    header img {
-      height: 40px;
-      border-radius: 8px;
-    }
-    header h1 {
-      font-size: 1.1rem;
-      font-weight: 500;
-    }
-    #video-container {
-      position: relative;
-      width: 100%;
-      max-width: 960px;
-      margin: 10px auto;
-      aspect-ratio: 16/9;
-      background: #000;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-    }
-    #loading {
-      color: #ccc;
-      font-size: 1.1rem;
-      margin-top: 20px;
-    }
+    body {background:#000;color:#fff;font-family:sans-serif;margin:0;text-align:center;}
+    header {display:flex;align-items:center;gap:10px;padding:10px;background:#101010;}
+    header img{height:40px;border-radius:8px;}
+    #video-container{max-width:960px;margin:10px auto;aspect-ratio:16/9;background:#000;border-radius:12px;overflow:hidden;}
+    video{width:100%;height:100%;}
+    #loading{margin-top:20px;color:#ccc;}
   </style>
 </head>
 <body>
@@ -62,26 +25,19 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const id = params.get("id");
+    const dataParam = params.get("data");
     const playlistURL = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
 
-    if (!id) {
-      document.getElementById("loading").innerText = "❌ No ID provided!";
-      throw new Error("Missing ?id=");
+    // Decode cookie if passed in hash (some browsers hide # part)
+    if (location.hash && !dataParam) {
+      console.log("Hash found:", location.hash);
     }
 
-    async function fetchPlaylist() {
+    async function fromPlaylist(channelId) {
       const text = await fetch(playlistURL).then(r => r.text());
       const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
-      let idx = -1;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (lines[i].includes(`tvg-id="${id}"`)) {
-          idx = i;
-          break;
-        }
-      }
-
-      if (idx === -1) throw new Error("Channel not found in playlist!");
+      let idx = lines.findIndex(l => l.includes(`tvg-id="${channelId}"`));
+      if (idx === -1) throw new Error("Channel not found!");
 
       const info = lines[idx];
       const keyLine = lines[idx + 1];
@@ -89,31 +45,33 @@
       const cookieLine = lines[idx + 3];
       const urlLine = lines[idx + 4];
 
-      const name = info.split(",")[1]?.trim();
-      const logo = (info.match(/tvg-logo="(.*?)"/) || [])[1];
-      const group = (info.match(/group-title="(.*?)"/) || [])[1];
-
-      // Extract clearkey pair
-      const keyPair = keyLine.split("=").pop().trim();
-      const [keyId, key] = keyPair.split(":");
-
-      // Extract UA and Cookie
-      const userAgent = uaLine.split("=")[1]?.trim();
-      const cookie = cookieLine.replace("#EXTHTTP:", "").trim();
-      const manifestUri = urlLine.trim();
-
-      return { id, name, logo, group, keyId, key, userAgent, cookie, manifestUri };
+      return {
+        id: channelId,
+        name: info.split(",")[1]?.trim(),
+        logo: (info.match(/tvg-logo="(.*?)"/) || [])[1],
+        group: (info.match(/group-title="(.*?)"/) || [])[1],
+        clearKeyId: keyLine.split("=")[1].split(":")[0],
+        clearKeyKey: keyLine.split("=")[1].split(":")[1],
+        userAgent: uaLine.split("=")[1],
+        cookie: (cookieLine.match(/"cookie":"(.*?)"/) || [])[1],
+        manifestUri: urlLine.trim()
+      };
     }
 
     async function initPlayer() {
       try {
-        const ch = await fetchPlaylist();
-        document.getElementById("loading").remove();
+        let ch;
+        if (dataParam) {
+          ch = JSON.parse(decodeURIComponent(dataParam));
+        } else if (id) {
+          ch = await fromPlaylist(id);
+        } else {
+          throw new Error("Missing ?id= or ?data=");
+        }
 
-        document.getElementById("header").innerHTML = `
-          <img src="${ch.logo}" alt="logo">
-          <h1>${ch.name}</h1>
-        `;
+        document.getElementById("loading").remove();
+        document.getElementById("header").innerHTML =
+          `<img src="${ch.logo}"><h3>${ch.name}</h3>`;
 
         const video = document.getElementById("video");
         const player = new shaka.Player(video);
@@ -127,7 +85,7 @@
         });
 
         player.configure({
-          drm: { clearKeys: { [ch.keyId]: ch.key } }
+          drm: { clearKeys: { [ch.clearKeyId]: ch.clearKeyKey } }
         });
 
         await player.load(ch.manifestUri);

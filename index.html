@@ -1,1 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Jiostar Player</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css" />
+  <style>
+    body {
+      background-color: #000;
+      color: #fff;
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: #101010;
+      border-bottom: 1px solid #222;
+    }
+    header img {
+      height: 40px;
+      border-radius: 8px;
+    }
+    header h1 {
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+    #video-container {
+      position: relative;
+      width: 100%;
+      max-width: 960px;
+      margin: 10px auto;
+      aspect-ratio: 16/9;
+      background: #000;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+    }
+    #loading {
+      color: #ccc;
+      font-size: 1.1rem;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header id="header"></header>
+  <div id="video-container">
+    <video id="video" autoplay controls></video>
+  </div>
+  <div id="loading">⏳ Loading stream...</div>
 
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+    const playlistURL = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u";
+
+    if (!id) {
+      document.getElementById("loading").innerText = "❌ No ID provided!";
+      throw new Error("Missing ?id=");
+    }
+
+    async function fetchPlaylist() {
+      const text = await fetch(playlistURL).then(r => r.text());
+      const lines = text.split("\n");
+      let index = -1;
+      let data = {};
+
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes(`tvg-id="${id}"`)) {
+          index = i;
+          break;
+        }
+      }
+
+      if (index === -1) throw new Error("Channel not found in playlist!");
+
+      const info = lines[index];
+      const keyLine = lines[index + 1];
+      const uaLine = lines[index + 2];
+      const cookieLine = lines[index + 3];
+      const urlLine = lines[index + 4];
+
+      data.name = info.split(",")[1]?.trim();
+      data.logo = (info.match(/tvg-logo="(.*?)"/) || [])[1];
+      data.group = (info.match(/group-title="(.*?)"/) || [])[1];
+      data.clearKeyId = keyLine.split("=")[1].split(":")[0];
+      data.clearKeyKey = keyLine.split("=")[1].split(":")[1];
+      data.userAgent = uaLine.split("=")[1];
+      data.cookie = JSON.parse(cookieLine.split(":", 2)[1]);
+      data.manifestUri = urlLine.trim();
+
+      return data;
+    }
+
+    async function initPlayer() {
+      try {
+        const channel = await fetchPlaylist();
+        document.getElementById("loading").remove();
+
+        document.getElementById("header").innerHTML = `
+          <img src="${channel.logo}" alt="logo">
+          <h1>${channel.name}</h1>
+        `;
+
+        const video = document.getElementById("video");
+        const player = new shaka.Player(video);
+
+        player.getNetworkingEngine().registerRequestFilter((type, request) => {
+          if (type === shaka.net.NetworkingEngine.RequestType.MANIFEST ||
+              type === shaka.net.NetworkingEngine.RequestType.SEGMENT) {
+            request.headers["User-Agent"] = channel.userAgent;
+            if (channel.cookie?.cookie) {
+              request.headers["Cookie"] = channel.cookie.cookie;
+            }
+          }
+        });
+
+        const config = {
+          drm: {
+            clearKeys: {
+              [channel.clearKeyId]: channel.clearKeyKey
+            }
+          }
+        };
+
+        player.configure(config);
+        await player.load(channel.manifestUri);
+        console.log("✅ Playing:", channel.name);
+      } catch (err) {
+        document.getElementById("loading").innerText = "❌ Failed: " + err.message;
+        console.error(err);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initPlayer);
+  </script>
+</body>
+</html>

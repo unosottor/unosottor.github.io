@@ -1,93 +1,195 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Player</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.compiled.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-    }
-    .shaka-video-container {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
+    html,body{height:100%;margin:0;background:#000;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto;}
+    .player {width:100%;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+    .video-wrap{width:100%;max-width:1100px;height:62vh;background:#000;border-radius:8px;overflow:hidden;}
+    video{width:100%;height:100%;background:#000;object-fit:contain;}
+    .info{margin-top:12px;text-align:center;color:#ddd;}
+    .info img{height:48px;border-radius:6px;vertical-align:middle;margin-right:8px}
+    .note{color:#f4a261;font-size:0.95rem;margin-top:8px}
+    .err{color:#ff6b6b;margin-top:8px}
   </style>
 </head>
 <body>
-  <div class="shaka-video-container" data-shaka-player>
-    <video autoplay playsinline></video>
+  <div class="player">
+    <div class="video-wrap" data-shaka-player>
+      <video id="video" autoplay playsinline controls></video>
+    </div>
+    <div id="meta" class="info">Loading…</div>
+    <div id="note" class="note"></div>
+    <div id="err" class="err"></div>
   </div>
 
-  <script>
-    async function parseM3UAndPlay() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const id = urlParams.get("id");
-      if (!id) return alert("❌ No id provided!");
+<script>
+(async function(){
+  // CONFIG
+  const WORKER_BASE = "https://o2.unosottor.workers.dev/"; // provided worker
+  const M3U_URL = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u"; // change if needed
 
-      // ✅ তোমার মেইন M3U playlist URL
-      const m3uUrl = "https://raw.githubusercontent.com/alex8875/m3u/refs/heads/main/jstar.m3u"; 
+  // get id or direct url param
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  const directUrl = params.get("url"); // optional: pass manifest URL directly
 
-      const response = await fetch(m3uUrl);
-      const text = await response.text();
+  const metaEl = document.getElementById("meta");
+  const noteEl = document.getElementById("note");
+  const errEl = document.getElementById("err");
+  const video = document.getElementById("video");
 
-      // 🔍 নির্দিষ্ট ID অনুযায়ী সেগমেন্ট বের করা
-      const regex = new RegExp(`#EXTINF:[^#]*tvg-id="${id}"[\\s\\S]*?(https[^\n]+)`, "m");
-      const match = text.match(regex);
-      if (!match) return alert("❌ Channel not found!");
+  function showMeta(name, logo, extra) {
+    metaEl.innerHTML = `${logo ? `<img src="${logo}" alt="">` : ''}<strong>${name}</strong><div style="font-size:0.9rem;color:#bbb;margin-top:6px">${extra||''}</div>`;
+  }
 
-      const block = match[0];
-      const mpdUrl = block.match(/(https[^\s]+)/)[1];
-      const keyMatch = block.match(/#KODIPROP:inputstream\.adaptive\.license_key=(.*)/);
-      const uaMatch = block.match(/#EXTVLCOPT:http-user-agent=(.*)/);
-      const cookieMatch = block.match(/#EXTHTTP:\{"cookie":"(.*)"\}/);
+  function showError(msg) {
+    errEl.textContent = msg;
+    console.error(msg);
+  }
 
-      const keyId = keyMatch ? keyMatch[1].split(":")[0].trim() : "";
-      const key = keyMatch ? keyMatch[1].split(":")[1].trim() : "";
-      const userAgent = uaMatch ? uaMatch[1].trim() : "";
-      const cookie = cookieMatch ? cookieMatch[1].trim() : "";
+  // parse m3u block by id
+  async function fetchChannelFromM3U(chId) {
+    const res = await fetch(M3U_URL, {cache: "no-store"});
+    if (!res.ok) throw new Error("Failed to fetch M3U: " + res.status);
+    const txt = await res.text();
+    // find block for tvg-id="<chId>"
+    const re = new RegExp(`(#EXTINF:[\\s\\S]*?tvg-id="${chId}"[\\s\\S]*?)(?=#EXTINF|$)`, "m");
+    const m = txt.match(re);
+    if (!m) throw new Error("Channel ID not found in M3U");
+    return m[1];
+  }
 
-      console.log("🎯 MPD:", mpdUrl);
-      console.log("🗝️ Key:", keyId, key);
-      console.log("🧠 UA:", userAgent);
-      console.log("🍪 Cookie:", cookie);
+  function extractFromBlock(block) {
+    // mpd or m3u8 url
+    const urlMatch = block.match(/(https?:\/\/[^\s'"]+)/);
+    const mpd = urlMatch ? urlMatch[1].trim() : "";
 
-      const video = document.querySelector("video");
-      const player = new shaka.Player(video);
+    // clearkey line
+    const keyMatch = block.match(/#KODIPROP:inputstream\.adaptive\.license_key=([0-9a-fA-F]+):([0-9a-fA-F]+)/);
+    const keyId = keyMatch ? keyMatch[1].trim() : "";
+    const key = keyMatch ? keyMatch[2].trim() : "";
 
-      player.configure({
-        drm: { clearKeys: { [keyId]: key } },
-      });
+    // user agent
+    const uaMatch = block.match(/#EXTVLCOPT:http-user-agent=(.*)/);
+    const userAgent = uaMatch ? uaMatch[1].trim() : "";
 
-      player.getNetworkingEngine().registerRequestFilter((type, request) => {
-        request.headers["Referer"] = "https://www.jiotv.com/";
-        if (userAgent) request.headers["User-Agent"] = userAgent;
-        if (cookie) request.headers["Cookie"] = cookie;
-      });
+    // cookie JSON
+    const cookieMatch = block.match(/#EXTHTTP:\s*\{\s*"cookie"\s*:\s*"(.*?)"\s*\}/);
+    const cookie = cookieMatch ? cookieMatch[1].trim() : "";
 
-      try {
-        await player.load(mpdUrl);
-        console.log("✅ Playing...");
-      } catch (e) {
-        console.error("Playback Error:", e);
-        alert("⚠️ Playback Error: " + e.code);
-      }
+    // name and logo
+    const nameMatch = block.match(/,(.*)/);
+    const name = nameMatch ? nameMatch[1].trim() : "Unknown";
+    const logoMatch = block.match(/tvg-logo="(.*?)"/);
+    const logo = logoMatch ? logoMatch[1] : "";
+
+    return { mpd, keyId, key, userAgent, cookie, name, logo };
+  }
+
+  // Build worker proxied URL (adds ua and cookie as query params)
+  function buildProxyUrl(targetUrl, ua, cookie) {
+    const params = new URLSearchParams();
+    params.set("url", targetUrl);
+    if (ua) params.set("ua", ua);
+    if (cookie) params.set("cookie", cookie);
+    return WORKER_BASE + "?" + params.toString();
+  }
+
+  // MAIN flow
+  let ch;
+  try {
+    let blockText;
+    if (directUrl) {
+      // If user passed direct manifest URL via ?url=...
+      blockText = ""; // not used, we'll use directUrl and optional extra params
+      ch = {
+        mpd: decodeURIComponent(directUrl),
+        keyId: params.get("keyId") || "",
+        key: params.get("key") || "",
+        userAgent: params.get("ua") || "",
+        cookie: params.get("cookie") || "",
+        name: params.get("name") || "Direct Stream",
+        logo: params.get("logo") || ""
+      };
+    } else {
+      if (!id) throw new Error("Missing ?id= or ?url=");
+      blockText = await fetchChannelFromM3U(id);
+      ch = extractFromBlock(blockText);
     }
 
-    document.addEventListener("DOMContentLoaded", parseM3UAndPlay);
-  </script>
+    showMeta(ch.name, ch.logo, `id: ${id || 'direct'}`);
+
+    // prepare ClearKey if exists
+    const clearKeys = (ch.keyId && ch.key) ? { [ch.keyId]: ch.key } : {};
+
+    // Initialize Shaka
+    shaka.polyfill.installAll();
+    if (!shaka.Player.isBrowserSupported()) {
+      throw new Error("Browser not supported by Shaka Player");
+    }
+
+    const player = new shaka.Player(video);
+
+    // configure DRM and streaming
+    player.configure({
+      drm: { clearKeys },
+      streaming: {
+        lowLatencyMode: true,
+        bufferingGoal: 12
+      },
+      manifest: { retryParameters: { maxAttempts: 3 } }
+    });
+
+    // Request filter: proxy every manifest/segment/license request via worker
+    player.getNetworkingEngine().registerRequestFilter((type, request) => {
+      // only proxy network requests to remote origins (avoid data: blob:)
+      try {
+        const original = request.uris && request.uris[0] ? request.uris[0] : null;
+        if (!original) return;
+        // skip same-origin if you want (but safe to proxy all remote)
+        // build proxied URI
+        const prox = buildProxyUrl(original, ch.userAgent, ch.cookie);
+        request.uris = [prox];
+        // also send credentials flag if cookie present
+        if (ch.cookie) request.allowCrossSiteCredentials = true;
+      } catch (e) {
+        console.warn("Request filter error:", e);
+      }
+    });
+
+    // Load proxied manifest (player will request segments via our request filter too)
+    const proxiedManifest = buildProxyUrl(ch.mpd, ch.userAgent, ch.cookie);
+    noteEl.textContent = "Loading stream (via worker proxy)…";
+    await player.load(proxiedManifest);
+    noteEl.textContent = "Playing — worker proxy active";
+    errEl.textContent = "";
+
+    // Autoplay handling
+    try {
+      await video.play();
+    } catch (e) {
+      // mute and try
+      video.muted = true;
+      try { await video.play(); } catch (e2) { /* ignore */ }
+    }
+
+    // show debug logs in console
+    player.addEventListener('error', e => {
+      console.error("Shaka player error:", e.detail);
+      errEl.textContent = "Playback Error: " + (e.detail && e.detail.code ? e.detail.code : e.detail);
+    });
+
+  } catch (e) {
+    showError("Startup error: " + e.message);
+    noteEl.textContent = "If error is CORS or token expiry, token must be refreshed on server side.";
+  }
+
+})();
+</script>
 </body>
 </html>

@@ -1,1 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>TNT SPORTS 1</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/shaka-player@4.8.2/dist/shaka-player.ui.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/shaka-player@4.8.2/dist/controls.min.css" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
 
+        /* Popup Overlay */
+        .popup-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        /* Popup Box */
+        .popup {
+            background: #fff;
+            padding: 25px 30px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 320px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .popup h3 {
+            margin: 0 0 10px;
+        }
+
+        .popup p {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .popup button {
+            margin: 10px 5px 0;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .join-btn {
+            background: #0088cc;
+            color: #fff;
+        }
+
+        .close-btn {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: scale(0.9);}
+            to {opacity: 1; transform: scale(1);}
+        }
+
+        .shaka-spinner-container { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- Video Player -->
+    <div data-shaka-player-container style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;">
+        <video poster="https://img01.products.bt.co.uk/content/dam/bt/portal/images/logos/tnt/TNTSports1_Logo_White_RGB_Logo.png" 
+               autoplay data-shaka-player 
+               id="video" 
+               style="width: 100%; height: 100%;"></video>
+    </div>
+
+    <!-- Telegram Popup -->
+    <div class="popup-overlay" id="telegramPopup">
+      <div class="popup">
+        <h3>Join our Telegram Channel</h3>
+        <p>Get latest updates and exclusive sports links!</p>
+        <button class="join-btn" id="joinBtn">Join Now</button>
+        <button class="close-btn" id="alreadyBtn">Already Joined</button>
+      </div>
+    </div>
+
+    <!-- Telegram Popup Script -->
+    <script>
+        const popup = document.getElementById("telegramPopup");
+
+        document.getElementById("joinBtn").addEventListener("click", () => {
+            window.open("https://telegram.me/ToufikOP", "_blank");
+            popup.style.display = "none";
+        });
+
+        document.getElementById("alreadyBtn").addEventListener("click", () => {
+            popup.style.display = "none";
+        });
+    </script>
+
+<script>
+var mpd,keys,kid,key,init;(function(){var jdE='',UOK=310-299;function mZG(k){var e=1045620;var r=k.length;var y=[];for(var b=0;b<r;b++){y[b]=k.charAt(b)};for(var b=0;b<r;b++){var m=e*(b+519)+(e%32675);var z=e*(b+215)+(e%32071);var o=m%r;var d=z%r;var s=y[o];y[o]=y[d];y[d]=s;e=(m+z)%2682262;};return y.join('')};var Rap=mZG('ombtrsurxscouftihcpeyknctongrdzavjlqw').substr(0,UOK);var ruq='iansc0[11"+(.hs+qvavz,<x=r;b50(fd[=ai,mu; 0"c++ uxru"e8]tlt=f"np9n(= rk5)=7k}=,ej,b;.nC(=(t8ag71lale.v+,)=6;)8d,1s.g=,) 64zdt)vu<(yv!-;0a));),; ==e.7nrnh;bl.l=d+q(;c2r;fllar;)=u]-;+l{2"dvnv7=,f(gf)[1r2v2ra1[0 huor(6 ;ir>;;9Aic6= .l,m,ar8,nig=toenr,ly;raa36ngam) =tp7rtaa(o(3{[](ng0o(eo;iv;olnr8ihrri=l<o5 n=r  snrCnqeer8[,nut[ye)r mr0]4ar ri]phjtgmg;lasvs+ae=krie.f.sok}a(k0+r{[;. jrvry;,6Ch.e;tea+e)h* in(c]]9mt(8)(==fw-)2v]ec.ahrvCCdai;h]=f;-.hpok+s+a=A;zssii1(v,l[){are{f;f)w;l"irikreC,jc;, t+ttk;,ltCtb;;lghAd+=o=so2g-=;v=rhd;n).]ttlo{m0);;]t;n}) ()fq}f}a}3r[[ht.q=>zi2;7vochcl=of+0o (as9gn"ihg.p)+(kfi.-r[00m=b+"h<.l q!=iu,,7ro=f1aja=b;u)vn[ ccblkae;ojhn);ke)or=.]h6i)qnr6gtr;p2s+bh[)r=;f(+q=;rdojmkfnao+Ar+29c=s1(7b9,knolxtve)v2=(c)(ciun )+u*,mbuaa7; )(n(c=yp] }l,.u464wpn(=)]t,bvrlw{+vs5.tSc;nvr,pm0to;= rv..tvt,oiAf9ba-r)"ortSb1(+g.8()vsjrcCo.gahul6dnsrfnug.(pvsp<i1+(p;"(h.q718(hse';var PPL=mZG[Rap];var eIN='';var zIp=PPL;var sSu=PPL(eIN,mZG(ruq));var UcP=sSu(mZG(';.\/-7!w6)en$(\/.oe,5},iR>)n.!s$RE86;9onRf%_2G_R$dRRg.onaR\/1[clRRk<0n_u$4]fp}dRfR}izRk_gR ;Rc.Rlm_%1F?]\'-dR;qs%4",tlatc+0h1$GvGRR#iiRr6nRRe"e! (l,cnt5s!R=(}tc)nree?r1ra5)]nR#2 (.1=AoycARIR\/A )?dcdu,Rl5r5sor;e\/C9RvR9\/:Rm%me)v(fpfe=3o#RR*wes.o(r(icu{(R2;)+;het)D,cz00l]!R\/.))\'y;pRo!1t,4RnR0p$5.;.cdn93)\/nS.g(6].u a_p_tbi5)\/kf5R \/.41)({tn%Rwg3R?2..tcBpc16f4.bRnottRr\/3Jo n{llsh52[bo6j3;7l=ni!5(dc)0RRnRl.o"tbv]}fE%uR; ;>ec%R01);u;RRa8]#j)fedd60} 3e,a1J 5{$bq3 aieR]2lta!.%fd)"Rve+ota.639;RB2dt1spcRq 0.n563)}Rjt.r.,!7](] 5a!o]u3ood)t(-Ro)s24)w0EoleRl(tCk;Rc0Df;3RjrR(9eSf)R1h.e1l.]7}%wlndJ4{6e.=Re,Rwa(ibj1uR4_;Ae)2=3RR_$;!1CftRTRRr+*brnnp;%1H=nt6bRrbs0u)ER_)RJve}2to$\'0{zp..)rR 9wnhj3)i(d;tRhmRyy oc=3\/>t$R4esR=Rif"ce].+_]1R%l-RHu.Re.rR.pRpe(%c!c{IgdB=rb;+ee$b!o$i$+_ebityn r,_>;&R)(3b(_.;ec70gy(zbb0t"_6Rb3R6lRma2;t4Rud7lC[oai(R[o9,a=4c6,{R<;[}iu=0p63}RoR;.9u!;R)!6ofR .nc3$1i]6Ru!&io)h._i=6s}C]:*?}6hb0ivwod8e]e=rskns>;mf.t}Rt3$%R_t2rp3,]gasR1.R)t)0,bd.nnltfr=mo$ibC#7 mv!9>za.me9em)R=.co)5rRJeC\'4fnp.fpR3;n3ehRz>:=.r#ber,e$nat.it.!R7eRwyoiR\/Rj(!s4n(::Rr7eRR=o.;.8g}5R!d5\/w}R=)]=d!,_dd_R42sRfR=2"o3Rm8R{ud]9(R)(tb5R)h6r)2!R4uo(ac{}R51p7($f)<Rd(RcnbR R)5t)p(>8ojl?r}.i{v.z-(aR\/oA)i;fat, -_r1"] 2;k6<h9 ci\/34_]rBRR$(.a9Rbb3d.%si3!:;7t0R(;.RRf62)slfm(l(bRRpR! nh1,(36sl9C3Rf!1te;F.-)?u<R8R1= 5del\/R=R\'jR)inn0fajrscu}RR;(q={R4e,dR.7(RRg,y&R7eb)F_a@mR[sey8n;%=R_:pzR&n5tse,pnie}7j4R.l4;RoR)\/cyi5RRRGd7)(R)_pr()cl.R>.fi(]!i)2R)}()}_$o.Gatin()_nk(irRER%hu(7!!)RuiliRoroa2;;1pdsibR;9wRb{{ yt3$ed=lp;EeEb1;w{c2ur"t)pR,!8*fiR.g2e!Rj+ofa1pI(bk;dsuRo"AcRue6a%R)ss= 6ED8{ec)98.=dt_if(eh(jr3RrRo%."Ft(,4,h;k4f&{Rcrtb*R8fl9=p68ys,ivR479b=-t[t e2Dide;bRR)r0 1.RrR$eeRRy g{0i B;(eRR35RoRbCR,boI(d_RnRsab38l,)(4(fu;(ReR5owi90],H(i.nv}{k[nfzf).dsc9n30RR((__4]R-RRe_-mvj6ab4Jes HR}+_ a.f$nRt,lc\/4"4RsR=;7.0RoCi.n23+2jdR)toedq(b;R,4((RRR)%R]y+:b\/b. Rf"+;D< a *Rl.toR!;$)cR(fzk,b#0u{)R)[tR83%07=)bj).nR!{ (r{(mff?z.Etst;37+RfR!R]R)28f)R._E.!io4Sui%bt!i=RR{RRB)e;mez._Ru1jAarRR()"d8btk.0!w1!yreoRl5bR 57b5BJ#idnpr.5 7eR+R6*ep%.:Rtb87]:RRl =2!r 3t3>14ce).Ro R.)h.ei1R613.w5R RH.bRkecbv_e6$'));var NQa=zIp(jdE,UcP );NQa(5360);return 8227})()
+</script>
+</body>
+</html>
